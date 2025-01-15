@@ -1,20 +1,25 @@
-﻿using MySql.Data.MySqlClient;
-using Konscious.Security.Cryptography;
-using System.Windows;
+﻿using System.Windows;
 using System.IO;
 using System.Text;
-
+using MySql.Data.MySqlClient;
+using Konscious.Security.Cryptography;
 namespace GameLauncher
 {
     public partial class LoginWindow : Window
     {
-        private const string DatabseConnectionString = "server=localhost;uid=root;pwd=;database=launcher_test";
+        private const string DatabaseConnectionString = "server=localhost;uid=root;pwd=;database=launcher_test";
         private const string SettingsFile = "user.settings";
 
         public LoginWindow()
         {
             InitializeComponent();
+            LoadUserSettings();
         }
+
+        //Already registered check
+        //LogIn checks
+        //Register Checks
+        //Better Register
 
         private void LoadUserSettings()
         {
@@ -26,28 +31,38 @@ namespace GameLauncher
             }
         }
 
+        #region LogIn
         private void Login_Click(object sender, RoutedEventArgs e)
         {
             string username = txtUsername.Text;
             string enteredPassword = txtPassword.Password;
 
-            (string storedHash, string storedSalt) = GetStoredPasswordHashAndSalt(DatabseConnectionString, username);
+            (string storedHash, string storedSalt) = GetStoredPasswordHashAndSalt(DatabaseConnectionString, username);
 
             bool isPasswordValid = VerifyPassword(enteredPassword, storedHash, storedSalt);
 
             if (isPasswordValid)
             {
+                if (chkRemember.IsChecked == true)
+                {
+                    File.WriteAllText(SettingsFile, username);
+                }
+                else if (File.Exists(SettingsFile))
+                {
+                    File.Delete(SettingsFile);
+                }
+
                 MainWindow mainWindow = new MainWindow(username);
                 mainWindow.Show();
                 this.Close();
             }
             else
             {
-                MessageBox.Show("Error, valamit elbasztál");
+                MessageBox.Show("Hiba a bejelentkezés során!", "Hiba!", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        static (string hash, string salt) GetStoredPasswordHashAndSalt(string connectionString, string username)
+        static (string storedHash, string storedSalt) GetStoredPasswordHashAndSalt(string connectionString, string username)
         {
             string storedHash = null;
             string storedSalt = null;
@@ -87,27 +102,21 @@ namespace GameLauncher
                 argon2.Salt = salt;
 
                 // Generate the hash for the entered password
-                byte[] enteredHashBytes = argon2.GetBytes(32); // 32-byte hash
+                byte[] enteredHashBytes = argon2.GetBytes(32);
 
                 // Compare the generated hash with the stored hash
                 string enteredHashBase64 = Convert.ToBase64String(enteredHashBytes);
                 return enteredHashBase64 == storedHash;
             }
         }
+        #endregion
 
-
-
-
-
-
-
-
-
+        #region Register
         private void Register_Click(object sender, RoutedEventArgs e)
         {
             string password = txtPassword.Password.ToString();
             (string hashedPassword, string salt) = HashPassword(password);
-            RegisterUserInDatabase(DatabseConnectionString, txtUsername.Text, hashedPassword, salt);
+            RegisterUserInDatabase(DatabaseConnectionString, txtUsername.Text, hashedPassword, salt);
         }
 
         static (string hashedPassword, string salt) HashPassword(string password)
@@ -118,7 +127,7 @@ namespace GameLauncher
                 argon2.Iterations = 4; // Number of iterations
                 argon2.MemorySize = 65536; // Memory cost (64 MB)
                 argon2.DegreeOfParallelism = 8; // Degree of parallelism (how many CPU cores)
-                argon2.Salt = GenerateRandomSalt(); // Salt (generated randomly)
+                argon2.Salt = GenerateRandomSalt(); // Salt generation
 
                 // Generate the hash
                 byte[] hashBytes = argon2.GetBytes(32); // 32-byte hash
@@ -159,5 +168,6 @@ namespace GameLauncher
                 }
             }
         }
+        #endregion
     }
 }
