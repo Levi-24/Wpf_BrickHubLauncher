@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using MySql.Data.MySqlClient;
 using Konscious.Security.Cryptography;
-using System.Text.RegularExpressions;
+using System.Net.Mail;
 namespace GameLauncher
 {
     public partial class LoginWindow : Window
@@ -17,9 +17,7 @@ namespace GameLauncher
             LoadUserSettings();
         }
 
-        //Hiányzik:
-        //egyből betölt mindent
-
+        #region General
         private void LoadUserSettings()
         {
             if (File.Exists(SettingsFile))
@@ -49,6 +47,16 @@ namespace GameLauncher
                 }
             }
         }
+
+        private void ToRegister_Click(object sender, RoutedEventArgs e)
+        {
+            regBtn.IsEnabled = true;
+            logBtn.IsEnabled = false;
+            chkRemember.Visibility = Visibility.Hidden;
+            emailTxb.Visibility = Visibility.Visible;
+            emailTxt.Visibility = Visibility.Visible;
+        }
+        #endregion
 
         #region LogIn
         private void Login_Click(object sender, RoutedEventArgs e)
@@ -86,8 +94,8 @@ namespace GameLauncher
 
         static (string storedHash, string storedSalt) GetStoredPasswordHashAndSalt(string connectionString, string username)
         {
-            string storedHash = null;
-            string storedSalt = null;
+            string storedHash = string.Empty;
+            string storedSalt = string.Empty;
 
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
@@ -151,11 +159,18 @@ namespace GameLauncher
             emailTxt.Visibility = Visibility.Hidden;
 
             string password = txtPassword.Password.ToString();
-            if (!string.IsNullOrEmpty(password) && !string.IsNullOrEmpty(txtUsername.ToString()))
-            {
-                (string hashedPassword, string salt) = HashPassword(password);
 
-                RegisterUserInDatabase(DatabaseConnectionString, txtUsername.Text, emailTxb.Text, hashedPassword, salt);
+            if (!string.IsNullOrEmpty(password) && !string.IsNullOrEmpty(txtUsername.ToString()) && !string.IsNullOrEmpty(emailTxb.ToString()))
+            {
+                if (EmailValidator(emailTxb.ToString()))
+                {
+                    (string hashedPassword, string salt) = HashPassword(password);
+                    RegisterUserInDatabase(DatabaseConnectionString, txtUsername.Text, emailTxb.Text, hashedPassword, salt);
+                }
+                else
+                {
+                    MessageBox.Show("Az email cím formátuma nem megfelelő!", "Hiba!", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
             else
             {
@@ -163,7 +178,19 @@ namespace GameLauncher
             }
         }
 
+        public bool EmailValidator(string emailaddress)
+        {
+            try
+            {
+                MailAddress m = new MailAddress(emailaddress);
 
+                return true;
+            }
+            catch (FormatException)
+            {
+                return false;
+            }
+        }
 
         static (string hashedPassword, string salt) HashPassword(string password)
         {
@@ -242,14 +269,5 @@ namespace GameLauncher
             }
         }
         #endregion
-
-        private void ToRegister_Click(object sender, RoutedEventArgs e)
-        {
-            regBtn.IsEnabled = true;
-            logBtn.IsEnabled = false;
-            chkRemember.Visibility = Visibility.Hidden;
-            emailTxb.Visibility = Visibility.Visible;
-            emailTxt.Visibility = Visibility.Visible;
-        }
     }
 }
