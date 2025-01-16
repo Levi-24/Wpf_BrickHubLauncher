@@ -21,10 +21,14 @@
         <TextBlock Text="Password:" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,0,0" Grid.Row="1" FontSize="24"/>
         <PasswordBox Name="txtPassword" Height="45" VerticalAlignment="Center" Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2" Margin="0,0,10,0" FontSize="24"/>
 
-        <TextBlock Text="Remember me:" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,0,0" Grid.Row="2" FontSize="24" Grid.ColumnSpan="2"/>
-        <CheckBox Name="chkRemember" VerticalAlignment="Top" Grid.Row="2" Margin="30,56,95,0" Height="20" Grid.Column="1"/>
+        <CheckBox Content="Remember me" Name="chkRemember" VerticalAlignment="Top" Grid.Row="2" Margin="10,49,75,0" Height="38" FontSize="24" Grid.ColumnSpan="2"/>
 
-        <Button Content="Login" Width="130" Height="49" VerticalAlignment="Center" HorizontalAlignment="Center" Click="Login_Click" Grid.Row="3" FontSize="24"/>
-        <Button Content="Register" Width="130" Height="49" VerticalAlignment="Center" HorizontalAlignment="Center" Click="Register_Click" Grid.Column="2" Grid.Row="3" FontSize="24"/>
+        <TextBlock x:Name="emailTxt" Text="E-mail:" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10,42,0,0" FontSize="24" Grid.Row="2" Visibility="Hidden"/>
+        <TextBox x:Name="emailTxb" Height="45" VerticalAlignment="Top" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,42,10,0" FontSize="24" Grid.Row="2" Visibility="Hidden"/>
+
+
+        <Button x:Name="logBtn" Content="Login" Width="130" Height="49" VerticalAlignment="Center" HorizontalAlignment="Center" Click="Login_Click" Grid.Row="3" FontSize="24"/>
+        <Button x:Name="regBtn" Content="Register" Width="130" Height="49" VerticalAlignment="Center" HorizontalAlignment="Center" Click="Register_Click" Grid.Column="2" Grid.Row="3" FontSize="24" IsEnabled="False"/>
+        <Button Content="ToRegister" Width="130" Height="49" VerticalAlignment="Center" HorizontalAlignment="Center" Click="ToRegister_Click" Grid.Column="1" Grid.Row="3" FontSize="24"/>
     </Grid>
 </Window>

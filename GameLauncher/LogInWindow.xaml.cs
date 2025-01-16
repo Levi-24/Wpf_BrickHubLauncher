@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using MySql.Data.MySqlClient;
 using Konscious.Security.Cryptography;
+using System.Text.RegularExpressions;
 namespace GameLauncher
 {
     public partial class LoginWindow : Window
@@ -16,18 +17,36 @@ namespace GameLauncher
             LoadUserSettings();
         }
 
-        //Already registered check
-        //LogIn checks
-        //Register Checks
-        //Better Register
+        //Hiányzik:
+        //egyből betölt mindent
 
         private void LoadUserSettings()
         {
             if (File.Exists(SettingsFile))
             {
-                string savedUsername = File.ReadAllText(SettingsFile);
-                txtUsername.Text = savedUsername;
-                chkRemember.IsChecked = true;
+                try
+                {
+                    using StreamReader reader = new StreamReader(SettingsFile);
+                    string fullSettings = reader.ReadToEnd();
+                    string[] pieces = fullSettings.Split(';');
+
+                    string savedUsername = pieces[0];
+                    string savedHash = pieces[1];
+                    string savedSalt = pieces[2];
+
+                    (string storedHash, string storedSalt) = GetStoredPasswordHashAndSalt(DatabaseConnectionString, savedUsername);
+                    if (storedHash == savedHash && storedSalt == savedSalt)
+                    {
+                        MainWindow mainWindow = new MainWindow(savedUsername);
+                        mainWindow.Show();
+                        this.Close();
+                    }
+                    chkRemember.IsChecked = true;
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
             }
         }
 
@@ -45,7 +64,10 @@ namespace GameLauncher
             {
                 if (chkRemember.IsChecked == true)
                 {
-                    File.WriteAllText(SettingsFile, username);
+                    using StreamWriter writer = new StreamWriter(SettingsFile);
+                    writer.Write(username + ";");
+                    writer.Write(storedHash + ";");
+                    writer.Write(storedSalt + ";");
                 }
                 else if (File.Exists(SettingsFile))
                 {
@@ -91,33 +113,57 @@ namespace GameLauncher
 
         static bool VerifyPassword(string enteredPassword, string storedHash, string storedSalt)
         {
-            byte[] salt = Convert.FromBase64String(storedSalt);
-
-            // Hash the entered password using the same salt and Argon2id
-            using (var argon2 = new Argon2id(Encoding.UTF8.GetBytes(enteredPassword)))
+            try
             {
-                argon2.Iterations = 4;
-                argon2.MemorySize = 65536;
-                argon2.DegreeOfParallelism = 8;
-                argon2.Salt = salt;
+                byte[] salt = Convert.FromBase64String(storedSalt);
 
-                // Generate the hash for the entered password
-                byte[] enteredHashBytes = argon2.GetBytes(32);
+                // Hash the entered password using the same salt and Argon2id
+                using (var argon2 = new Argon2id(Encoding.UTF8.GetBytes(enteredPassword)))
+                {
+                    argon2.Iterations = 4;
+                    argon2.MemorySize = 65536;
+                    argon2.DegreeOfParallelism = 8;
+                    argon2.Salt = salt;
 
-                // Compare the generated hash with the stored hash
-                string enteredHashBase64 = Convert.ToBase64String(enteredHashBytes);
-                return enteredHashBase64 == storedHash;
+                    // Generate the hash for the entered password
+                    byte[] enteredHashBytes = argon2.GetBytes(32);
+
+                    // Compare the generated hash with the stored hash
+                    string enteredHashBase64 = Convert.ToBase64String(enteredHashBytes);
+                    return enteredHashBase64 == storedHash;
+                }
             }
+            catch (Exception)
+            {
+                return false;
+            }
+
         }
         #endregion
 
         #region Register
         private void Register_Click(object sender, RoutedEventArgs e)
         {
+            regBtn.IsEnabled = false;
+            logBtn.IsEnabled = true;
+            chkRemember.Visibility = Visibility.Visible;
+            emailTxb.Visibility = Visibility.Hidden;
+            emailTxt.Visibility = Visibility.Hidden;
+
             string password = txtPassword.Password.ToString();
-            (string hashedPassword, string salt) = HashPassword(password);
-            RegisterUserInDatabase(DatabaseConnectionString, txtUsername.Text, hashedPassword, salt);
+            if (!string.IsNullOrEmpty(password) && !string.IsNullOrEmpty(txtUsername.ToString()))
+            {
+                (string hashedPassword, string salt) = HashPassword(password);
+
+                RegisterUserInDatabase(DatabaseConnectionString, txtUsername.Text, emailTxb.Text, hashedPassword, salt);
+            }
+            else
+            {
+                MessageBox.Show("A felhasználónév és a jelszó nem lehet üres!", "Hiba!", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
+
+
 
         static (string hashedPassword, string salt) HashPassword(string password)
         {
@@ -150,24 +196,60 @@ namespace GameLauncher
             }
         }
 
-        static void RegisterUserInDatabase(string connectionString, string username, string passwordHash, string salt)
+        static void RegisterUserInDatabase(string connectionString, string username, string email, string passwordHash, string salt)
         {
+            List<string> usernames = new List<string>();
+
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 conn.Open();
 
-                string query = "INSERT INTO users (username, email, password_hash, salt) VALUES (@username, @email, @password_hash, @salt)";
+                string query = "SELECT username FROM users WHERE username = @username";
                 using (MySqlCommand cmd = new MySqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@username", username);
-                    cmd.Parameters.AddWithValue("@email", "fasztorta@gmail.com");
-                    cmd.Parameters.AddWithValue("@password_hash", passwordHash);
-                    cmd.Parameters.AddWithValue("@salt", salt);
+                    using (MySqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            usernames.Add(reader["username"].ToString());
+                        }
+                    }
+                }
+            }
 
-                    cmd.ExecuteNonQuery(); // Execute the insert
+            if (usernames.Contains(username))
+            {
+                MessageBox.Show("A felhasználónév már foglalt!", "Hiba!", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            else
+            {
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    string query = "INSERT INTO users (username, email, password_hash, salt) VALUES (@username, @email, @password_hash, @salt)";
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@username", username);
+                        cmd.Parameters.AddWithValue("@email", email);
+                        cmd.Parameters.AddWithValue("@password_hash", passwordHash);
+                        cmd.Parameters.AddWithValue("@salt", salt);
+
+                        cmd.ExecuteNonQuery(); // Execute the insert
+                    }
                 }
             }
         }
         #endregion
+
+        private void ToRegister_Click(object sender, RoutedEventArgs e)
+        {
+            regBtn.IsEnabled = true;
+            logBtn.IsEnabled = false;
+            chkRemember.Visibility = Visibility.Hidden;
+            emailTxb.Visibility = Visibility.Visible;
+            emailTxt.Visibility = Visibility.Visible;
+        }
     }
 }
