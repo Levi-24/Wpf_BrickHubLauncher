@@ -1,25 +1,24 @@
-﻿using MySql.Data.MySqlClient;
-using System.Collections.ObjectModel;
-using System.IO;
+﻿using System.Collections.ObjectModel;
+using System.Windows.Media.Imaging;
+using MySql.Data.MySqlClient;
 using System.Net.Http;
 using System.Windows;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
+using System.IO;
 
 namespace GameLauncher
 {
     public partial class MainWindow : Window
     {
-        private string username;
-        private ObservableCollection<Game> Games { get; set; } = new ObservableCollection<Game>();
-        private string ImageDirectory = System.IO.Path.Combine(Environment.CurrentDirectory, "DownloadedImages");
+        private ObservableCollection<Game> Games = new ObservableCollection<Game>();
+        private string ImageDirectory = Path.Combine(Environment.CurrentDirectory, "DownloadedImages");
+        const string SettingsFile = "user.settings";
 
-        public MainWindow(string username)
+        public MainWindow()
         {
             InitializeComponent();
             LoadGames();
+            DownloadImageAsync("https://png.pngtree.com/png-vector/20190820/ourmid/pngtree-no-image-vector-illustration-isolated-png-image_1694547.jpg");
             GamesList.ItemsSource = Games;
-            TestName.Text = username;
         }
 
         private async void LoadGames()
@@ -36,23 +35,14 @@ namespace GameLauncher
                     {
                         while (reader.Read())
                         {
-                            var game = new Game
-                            {
-                                Id = reader.GetInt32("id"),
-                                Name = reader.GetString("name"),
-                                Description = reader.GetString("description"),
-                                ImageUrl = reader["image_path"] != DBNull.Value ? reader.GetString("image_path") : null,
-                                ReleaseDate = reader.GetDateTime("release_date"),
-                            };
+                            int id = reader.GetInt32("id");
+                            string name = reader.GetString("name");
+                            string description = reader.GetString("description");
+                            string imageUrl = reader["image_path"] != DBNull.Value ? reader.GetString("image_path") : null;
+                            DateTime releaseDate = reader.GetDateTime("release_date");
+                            string localImagePath = await DownloadImageAsync(imageUrl);
 
-                            game.LocalImagePath = await DownloadImageAsync(game.ImageUrl);
-
-                            if (string.IsNullOrEmpty(game.LocalImagePath))
-                            {
-                                game.LocalImagePath = await DownloadImageAsync("https://as1.ftcdn.net/v2/jpg/04/34/72/82/1000_F_434728286_OWQQvAFoXZLdGHlObozsolNeuSxhpr84.jpg");
-                            }
-
-                            Games.Add(game);
+                            Games.Add(new Game(id, name, description, imageUrl, localImagePath, releaseDate));
                         }
                     }
                 }
@@ -65,22 +55,17 @@ namespace GameLauncher
             {
                 GameDescription.Text = selectedGame.Description;
 
-                if (!string.IsNullOrEmpty(selectedGame.LocalImagePath) && File.Exists(selectedGame.LocalImagePath))
+                if (File.Exists(selectedGame.LocalImagePath))
                 {
                     GameImage.Source = new BitmapImage(new Uri(selectedGame.LocalImagePath));
                 }
             }
         }
 
-        private void LaunchButton_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
         private async Task<string> DownloadImageAsync(string url)
         {
             if (string.IsNullOrEmpty(url))
-                return null;
+                return Path.Combine(ImageDirectory, "pngtree-no-image-vector-illustration-isolated-png-image_1694547.jpg");
 
             try
             {
@@ -89,8 +74,8 @@ namespace GameLauncher
                     Directory.CreateDirectory(ImageDirectory);
                 }
 
-                string fileName = System.IO.Path.GetFileName(new Uri(url).LocalPath);
-                string localFilePath = System.IO.Path.Combine(ImageDirectory, fileName);
+                string fileName = Path.GetFileName(new Uri(url).LocalPath);
+                string localFilePath = Path.Combine(ImageDirectory, fileName);
 
                 if (File.Exists(localFilePath))
                 {
@@ -110,29 +95,114 @@ namespace GameLauncher
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error downloading image: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return null;
+                return Path.Combine(ImageDirectory, "pngtree-no-image-vector-illustration-isolated-png-image_1694547.jpg");
             }
         }
 
-        public class Game
+        private void LaunchButton_Click(object sender, RoutedEventArgs e)
         {
-            public int Id { get; set; }
-            public string Name { get; set; }
-            public string Description { get; set; }
-            public string ImageUrl { get; set; }
-            public string LocalImagePath { get; set; }
-            public DateTime ReleaseDate { get; set; }
+            MessageBox.Show("Azt hitted xddd :3 ");
         }
 
         private void LogOut_Click(object sender, RoutedEventArgs e)
         {
-            const string SettingsFile = "user.settings";
             File.Delete(SettingsFile);
-
             LoginWindow loginWindow = new LoginWindow();
             loginWindow.Show();
             this.Close();
+        }
+
+        private async void DownloadButton_Click(object sender, RoutedEventArgs e)
+        {
+            string fileUrl = "https://getsamplefiles.com/download/zip/sample-3.zip";
+            string tempPath = Path.Combine(Path.GetTempPath(), "sample.zip");
+
+            string targetDirectory = @"../../../downloads";
+            string targetPath = Path.Combine(targetDirectory, "sample.zip");
+
+            if (!Directory.Exists(targetDirectory))
+            {
+                Directory.CreateDirectory(targetDirectory);
+            }
+
+            var progress = new Progress<double>(value =>
+            {
+                ProgressBar.Value = value;
+            });
+
+            try
+            {
+                await DownloadFileWithProgressAsync(fileUrl, tempPath, progress);
+
+                if (File.Exists(tempPath))
+                {
+                    File.Move(tempPath, targetPath);
+                    MessageBox.Show($"File successfully downloaded and moved to: {targetPath}");
+                }
+                else
+                {
+                    MessageBox.Show("Downloaded file not found in the temporary path.");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred: {ex.Message}");
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+        private async Task DownloadFileWithProgressAsync(string fileUrl, string destinationPath, IProgress<double> progress)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                try
+                {
+                    using (var response = await client.GetAsync(fileUrl, HttpCompletionOption.ResponseHeadersRead))
+                    {
+                        response.EnsureSuccessStatusCode();
+
+                        var totalBytes = response.Content.Headers.ContentLength ?? -1L;
+                        var canReportProgress = totalBytes != -1 && progress != null;
+
+                        using (var contentStream = await response.Content.ReadAsStreamAsync())
+                        using (var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true))
+                        {
+                            var buffer = new byte[8192];
+                            long totalRead = 0;
+                            int bytesRead;
+
+                            while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                            {
+                                await fileStream.WriteAsync(buffer, 0, bytesRead);
+
+                                totalRead += bytesRead;
+
+                                if (canReportProgress)
+                                {
+                                    double percentage = (double)totalRead / totalBytes * 100;
+                                    progress.Report(percentage);
+                                }
+                            }
+                        }
+                    }
+
+                    MessageBox.Show($"Download completed! File saved to: {destinationPath}");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error: {ex.Message}");
+                }
+            }
         }
     }
 }

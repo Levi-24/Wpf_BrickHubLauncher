@@ -1,14 +1,16 @@
-﻿using System.Windows;
-using System.IO;
+﻿using System.IO;
 using System.Text;
-using MySql.Data.MySqlClient;
-using Konscious.Security.Cryptography;
+using System.Windows;
 using System.Net.Mail;
+using MySql.Data.MySqlClient;
+using System.Security.Cryptography;
+using Konscious.Security.Cryptography;
+
 namespace GameLauncher
 {
     public partial class LoginWindow : Window
     {
-        private const string DatabaseConnectionString = "server=localhost;uid=root;pwd=;database=launcher_test";
+        private const string DBConnectionString = "server=localhost;uid=root;pwd=;database=launcher_test";
         private const string SettingsFile = "user.settings";
 
         public LoginWindow()
@@ -32,10 +34,10 @@ namespace GameLauncher
                     string savedHash = pieces[1];
                     string savedSalt = pieces[2];
 
-                    (string storedHash, string storedSalt) = GetStoredPasswordHashAndSalt(DatabaseConnectionString, savedUsername);
+                    (string storedHash, string storedSalt) = GetStoredPasswordHashAndSalt(DBConnectionString, savedUsername);
                     if (storedHash == savedHash && storedSalt == savedSalt)
                     {
-                        MainWindow mainWindow = new MainWindow(savedUsername);
+                        MainWindow mainWindow = new MainWindow();
                         mainWindow.Show();
                         this.Close();
                     }
@@ -64,7 +66,7 @@ namespace GameLauncher
             string username = txtUsername.Text;
             string enteredPassword = txtPassword.Password;
 
-            (string storedHash, string storedSalt) = GetStoredPasswordHashAndSalt(DatabaseConnectionString, username);
+            (string storedHash, string storedSalt) = GetStoredPasswordHashAndSalt(DBConnectionString, username);
 
             bool isPasswordValid = VerifyPassword(enteredPassword, storedHash, storedSalt);
 
@@ -82,7 +84,7 @@ namespace GameLauncher
                     File.Delete(SettingsFile);
                 }
 
-                MainWindow mainWindow = new MainWindow(username);
+                MainWindow mainWindow = new MainWindow();
                 mainWindow.Show();
                 this.Close();
             }
@@ -165,7 +167,7 @@ namespace GameLauncher
                 if (EmailValidator(emailTxb.ToString()))
                 {
                     (string hashedPassword, string salt) = HashPassword(password);
-                    RegisterUserInDatabase(DatabaseConnectionString, txtUsername.Text, emailTxb.Text, hashedPassword, salt);
+                    RegisterUserInDatabase(DBConnectionString, txtUsername.Text, emailTxb.Text, hashedPassword, salt);
                 }
                 else
                 {
@@ -215,12 +217,9 @@ namespace GameLauncher
 
         static byte[] GenerateRandomSalt()
         {
-            using (var rng = new System.Security.Cryptography.RNGCryptoServiceProvider())
-            {
-                byte[] salt = new byte[16]; // 16-byte salt
-                rng.GetBytes(salt);
-                return salt;
-            }
+            byte[] salt = new byte[16];
+            RandomNumberGenerator.Fill(salt);
+            return salt;
         }
 
         static void RegisterUserInDatabase(string connectionString, string username, string email, string passwordHash, string salt)

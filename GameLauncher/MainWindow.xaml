@@ -11,13 +11,12 @@
             </ListView.View>
         </ListView>
 
-        <StackPanel HorizontalAlignment="Right" Width="450" Margin="10">
-            <Image x:Name="GameImage" Height="200" Margin="10" />
-            <TextBlock x:Name="GameDescription" TextWrapping="Wrap" Margin="10" />
-            <Button x:Name="LaunchButton" Content="Launch Game" Click="LaunchButton_Click" Margin="10" />
-            <Button Content="Log Out" Click="LogOut_Click"/>
-        </StackPanel>
-        
-        <TextBox x:Name="TestName" HorizontalAlignment="Left" Margin="70,281,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120" FontSize="24"/>
+        <Image x:Name="GameImage" Margin="315,9,225,215" />
+        <TextBlock x:Name="GameDescription" TextWrapping="Wrap" Margin="593,10,30,217" />
+        <Button x:Name="LaunchButton" Content="Launch Game" Click="LaunchButton_Click" Margin="506,234,118,155" />
+        <Button Content="Log Out" Click="LogOut_Click" Margin="700,234,10,155"/>
+        <Button Content="Download" Click="DownloadButton_Click" Margin="315,234,310,155"/>
+        <ProgressBar HorizontalAlignment="Left" x:Name="ProgressBar" Minimum="0" Maximum="100" Height="20" Margin="340,299,0,0" VerticalAlignment="Top" Width="430"/>
+
     </Grid>
 </Window>
