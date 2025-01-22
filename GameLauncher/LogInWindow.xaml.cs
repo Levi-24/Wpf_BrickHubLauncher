@@ -180,11 +180,11 @@ namespace GameLauncher
             }
         }
 
-        public bool EmailValidator(string emailaddress)
+        public bool EmailValidator(string emailAddress)
         {
             try
             {
-                MailAddress m = new MailAddress(emailaddress);
+                MailAddress m = new MailAddress(emailAddress);
 
                 return true;
             }
