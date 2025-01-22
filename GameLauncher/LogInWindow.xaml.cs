@@ -1,10 +1,10 @@
-﻿using System.IO;
-using System.Text;
-using System.Windows;
-using System.Net.Mail;
-using MySql.Data.MySqlClient;
+﻿using Konscious.Security.Cryptography;
 using System.Security.Cryptography;
-using Konscious.Security.Cryptography;
+using MySql.Data.MySqlClient;
+using System.Net.Mail;
+using System.Windows;
+using System.Text;
+using System.IO;
 
 namespace GameLauncher
 {
@@ -262,7 +262,7 @@ namespace GameLauncher
                         cmd.Parameters.AddWithValue("@password_hash", passwordHash);
                         cmd.Parameters.AddWithValue("@salt", salt);
 
-                        cmd.ExecuteNonQuery(); // Execute the insert
+                        cmd.ExecuteNonQuery();
                     }
                 }
             }

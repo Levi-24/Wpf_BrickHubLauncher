@@ -1,18 +1,22 @@
 ﻿using System.Collections.ObjectModel;
 using System.Windows.Media.Imaging;
 using MySql.Data.MySqlClient;
+using System.IO.Compression;
 using System.Net.Http;
 using System.Windows;
-using System.IO.Compression;
 using System.IO;
 
 namespace GameLauncher
 {
     public partial class MainWindow : Window
     {
+        //I removed nulbale types from the properties
+        //mention it in the documentation
         private ObservableCollection<Game> Games = new ObservableCollection<Game>();
         private string ImageDirectory = Path.Combine(Environment.CurrentDirectory, "DownloadedImages");
-        const string SettingsFile = "user.settings";
+        private string FileDirectory = Path.Combine(Environment.CurrentDirectory, "DownloadedGames");
+        private const string SettingsFile = "user.settings";
+        private const string GamePaths = "paths.txt";
 
         public MainWindow()
         {
@@ -100,7 +104,7 @@ namespace GameLauncher
                     return localFilePath;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return Path.Combine(ImageDirectory, "pngtree-no-image-vector-illustration-isolated-png-image_1694547.jpg");
             }
@@ -112,7 +116,7 @@ namespace GameLauncher
             if (Games[GamesList.SelectedIndex] != null )
             {
                 // Find the game's executable
-                string executablePath = Path.Combine(selectedGame.InstallPath, "GameExecutable.exe");
+                string executablePath = Path.Combine(Games[GamesList.SelectedIndex].InstallPath, "TopDownGame.exe");
 
                 if (File.Exists(executablePath))
                 {
@@ -137,23 +141,23 @@ namespace GameLauncher
         {
             string fileUrl = Games[GamesList.SelectedIndex].DownloadLink;
             string tempPath = Path.Combine(Path.GetTempPath(), "sample.zip");
-            string targetDirectory = "";
+            //string targetDirectory = "";
 
-            using (var dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog())
+            //using (var dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog())
+            //{
+            //    dialog.IsFolderPicker = true;
+            //    if (dialog.ShowDialog() == Microsoft.WindowsAPICodePack.Dialogs.CommonFileDialogResult.Ok)
+            //    {
+            //        targetDirectory = dialog.FileName;
+            //    }
+            //}
+
+            string targetPath = Path.Combine(FileDirectory, Games[GamesList.SelectedIndex].Name + ".zip");
+            string installPath = Path.Combine(FileDirectory, Games[GamesList.SelectedIndex].Name);
+
+            if (!Directory.Exists(FileDirectory))
             {
-                dialog.IsFolderPicker = true;
-                if (dialog.ShowDialog() == Microsoft.WindowsAPICodePack.Dialogs.CommonFileDialogResult.Ok)
-                {
-                    targetDirectory = dialog.FileName;
-                }
-            }
-
-            string targetPath = Path.Combine(targetDirectory, Games[GamesList.SelectedIndex].Name + ".zip");
-            string installPath = Path.Combine(targetDirectory, Games[GamesList.SelectedIndex].Name);
-
-            if (!Directory.Exists(targetDirectory))
-            {
-                Directory.CreateDirectory(targetDirectory);
+                Directory.CreateDirectory(FileDirectory);
             }
 
             var progress = new Progress<double>(value =>
@@ -169,14 +173,46 @@ namespace GameLauncher
                 {
                     File.Move(tempPath, targetPath);
 
-                    // Extract the ZIP file
                     var installer = new Installer();
-                    installer.InstallGame(downloadPath, installPath);
+                    installer.InstallGame(targetPath, installPath);
 
-                    // Save install path
-                    selectedGame.InstallPath = installPath;
-                    UpdateGameInstallPathInDatabase(selectedGame);
+                    string originalFolderPath = installPath;
+                    string parentDirectory = Directory.GetParent(originalFolderPath).FullName;
 
+                    string[] subFolders = Directory.GetDirectories(originalFolderPath);
+
+                    string subFolderPath = subFolders[0];
+
+                    string newSubFolderPath = Path.Combine(parentDirectory, Path.GetFileName(subFolderPath));
+                    Directory.Move(subFolderPath, newSubFolderPath);
+
+                    Directory.Delete(originalFolderPath, true);
+
+                    if (File.Exists(GamePaths))
+                    {
+                        try
+                        {
+                            using StreamWriter writer = new StreamWriter(GamePaths, true);
+                            writer.WriteLine($"{Games[GamesList.SelectedIndex].Name};{installPath}");
+                        }
+                        catch (Exception)
+                        {
+                            throw;
+                        }
+                    }
+                    else
+                    {
+                        File.Create(GamePaths);
+                        using StreamWriter writer = new StreamWriter(GamePaths, true);
+                        writer.WriteLine($"{Games[GamesList.SelectedIndex].Name};{installPath}");
+                    }
+                    using StreamReader reader = new StreamReader(GamePaths);
+                    var paths = reader.ReadToEnd().Split("\n");
+                    var readInstallPath = paths
+                        .Where(p => p.Split(';')[0] == Games[GamesList.SelectedIndex].Name)
+                        .Select(p => p.Split(';')[1]).FirstOrDefault();
+                    lblTest.Content = readInstallPath;
+                    Games[GamesList.SelectedIndex].InstallPath = readInstallPath;
                     MessageBox.Show($"Download completed!");
                 }
                 else

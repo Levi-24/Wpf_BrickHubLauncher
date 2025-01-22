@@ -7,6 +7,7 @@
         public string Description { get; set; }
         public string ImageUrl { get; set; }
         public string DownloadLink { get; set; }
+        public string InstallPath { get; set; }
         public string LocalImagePath { get; set; }
         public DateTime ReleaseDate { get; set; }
 
