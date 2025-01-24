@@ -11,11 +11,10 @@ namespace GameLauncher
 {
     public partial class MainWindow : Window
     {
-        //I removed nulbale types from the properties
-        //mention it in the documentation
         private ObservableCollection<Game> Games = new ObservableCollection<Game>();
         private string ImageDirectory = Path.Combine(Environment.CurrentDirectory, "DownloadedImages");
         private string GameDirectory = Path.Combine(Environment.CurrentDirectory, "DownloadedGames");
+        private const string GamePaths = "gamePaths.json";
         private const string SettingsFile = "user.settings";
         private const string connectionString = "Server=localhost;Database=launcher_test;Uid=root;Pwd=;";
 
@@ -101,15 +100,15 @@ namespace GameLauncher
 
         private void LaunchButton_Click(object sender, RoutedEventArgs e)
         {
-            //if (Games[GamesList.SelectedIndex] != null && !string.IsNullOrEmpty(Games[GamesList.SelectedIndex].InstallPath))
-            //{
-            //    string executablePath = Path.Combine(Games[GamesList.SelectedIndex].InstallPath, /*Here comes the exe name (game.exe)*/);
+            if (Games[GamesList.SelectedIndex] != null && !string.IsNullOrEmpty(Games[GamesList.SelectedIndex].InstallPath))
+            {
+                string executablePath = Path.Combine(Games[GamesList.SelectedIndex].InstallPath, "Top Down Game.exe");
 
-            //    if (File.Exists(executablePath))
-            //        System.Diagnostics.Process.Start(executablePath);
-            //    else
-            //        MessageBox.Show("Game exe not found!");
-            //}
+                if (File.Exists(executablePath))
+                    System.Diagnostics.Process.Start(executablePath);
+                else
+                    MessageBox.Show("Game exe not found!");
+            }
         }
 
         private void LogOutButton_Click(object sender, RoutedEventArgs e)
@@ -163,6 +162,8 @@ namespace GameLauncher
 
                     string newSubFolderPath = Path.Combine(parentDirectory, Path.GetFileName(subFolderPath));
                     Directory.Move(subFolderPath, newSubFolderPath);
+
+                    File.WriteAllText(GamePaths, newSubFolderPath + @"\Top Down Game.exe");
 
                     Directory.Delete(originalFolderPath, true);
                     MessageBox.Show($"Download completed!");

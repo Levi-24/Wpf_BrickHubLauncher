@@ -17,7 +17,5 @@
         <Button Content="Log Out" Click="LogOutButton_Click" Margin="700,234,10,155"/>
         <Button x:Name="DownloadButton" Visibility="Hidden" Content="Download" Click="DownloadButton_Click" Margin="315,234,310,155"/>
         <ProgressBar Visibility="Hidden" HorizontalAlignment="Left" x:Name="ProgressBar" Minimum="0" Maximum="100" Height="20" Margin="340,299,0,0" VerticalAlignment="Top" Width="430"/>
-        <Label x:Name="lblTest" Content="Label" HorizontalAlignment="Left" Margin="362,379,0,0" VerticalAlignment="Top"/>
-
     </Grid>
 </Window>
