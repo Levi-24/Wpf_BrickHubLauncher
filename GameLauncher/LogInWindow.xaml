@@ -11,7 +11,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -21,22 +21,30 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Label x:Name="lblUsername" Content="Username"  FontSize="24"/>
-        <TextBox Name="txtUsername" FontSize="24" Grid.Column="1" Grid.ColumnSpan="2"/>
+        <!-- Username -->
+        <Label x:Name="lblUsername" Content="Username" FontSize="24" VerticalAlignment="Center" />
+        <TextBox Name="txtUsername" FontSize="24" Grid.Column="1" Grid.ColumnSpan="2" Margin="10,0,0,0" VerticalAlignment="Center" />
 
-        <Label x:Name="lblPassword" Content="Password" FontSize="24" Grid.Row="1"/>
-        <PasswordBox Name="txtPassword" FontSize="24" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"/>
+        <!-- Password -->
+        <Label x:Name="lblPassword" Content="Password" FontSize="24" Grid.Row="1" VerticalAlignment="Center" />
+        <PasswordBox Name="txtPassword" FontSize="24" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="10,0,0,0" VerticalAlignment="Center" />
 
-        <CheckBox x:Name="chkRemember"     Visibility="Hidden"       Content="Remember me" FontSize="24" Grid.Row="2" Grid.ColumnSpan="2"/>
+        <!-- Password Again -->
+        <Label x:Name="lblPassAgain" Content="Password2" Visibility="Hidden" FontSize="24" Grid.Row="2" VerticalAlignment="Center" />
+        <PasswordBox x:Name="txtPassAgain" Visibility="Hidden" FontSize="24" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Margin="10,0,0,0" VerticalAlignment="Center" />
 
-        <Label x:Name="lblPassAgain" Content="Password A." FontSize="24" Grid.Row="2"/>
-        <PasswordBox x:Name="txtPassAgain" FontSize="24" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="2"/>
+        <!-- E-mail -->
+        <Label x:Name="lblEmail" Content="E-mail" Visibility="Hidden" FontSize="24" Grid.Row="3" VerticalAlignment="Center" />
+        <TextBox x:Name="txtEmail" FontSize="24" Visibility="Hidden" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Margin="10,0,0,0" VerticalAlignment="Center" />
 
-        <Label x:Name="lblEmail" Content="E-mail" FontSize="24" Grid.Row="3"/>
-        <TextBox x:Name="txtEmail" FontSize="24" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2"/>
+        <!-- Remember Me Checkbox -->
+        <CheckBox x:Name="chkRemember" Content="Remember me" FontSize="24" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" VerticalAlignment="Top" Margin="5" />
 
-        <Button x:Name="logBtn" Content="Login" Click="Login_Click" Grid.Row="4" FontSize="24"/>
-        <Button x:Name="regBtn" Content="Register" Click="Register_Click" Grid.Column="1" Grid.Row="4" FontSize="24" IsEnabled="False"/>
-        <Button x:Name="toRegBtn" Content="ToRegister" Click="ToRegister_Click" Grid.Column="2" Grid.Row="4" FontSize="24"/>
+        <!-- Buttons -->
+        <StackPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Left" >
+            <Button x:Name="logBtn" Content="Login" Click="Login_Click" FontSize="24" Margin="0,70,10,70" />
+            <Button x:Name="regBtn" Content="Register" Click="Register_Click" FontSize="24" Margin="0,70,10,70" IsEnabled="False" />
+            <Button x:Name="toRegBtn" Content="To Register" Click="ToRegister_Click" FontSize="24" Margin="0,70,10,70"/>
+        </StackPanel>
     </Grid>
 </Window>

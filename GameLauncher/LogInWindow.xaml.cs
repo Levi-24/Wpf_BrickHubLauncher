@@ -106,7 +106,7 @@ namespace GameLauncher
             }
             else
             {
-                MessageBox.Show("Hiba a bejelentkezés során!", "Hiba!", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Error during the log in process!", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -175,27 +175,37 @@ namespace GameLauncher
             string password = txtPassword.Password.ToString();
             string passwordAgain = txtPassAgain.Password.ToString();
 
-            if (!string.IsNullOrEmpty(password) && password == passwordAgain && !string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(email))
+            if (!string.IsNullOrEmpty(password) && !string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(email))
             {
-                if (EmailValidator(email))
+                if (password == passwordAgain)
                 {
-                    (string hashedPassword, string salt) = HashPassword(password);
-                    RegisterUserInDatabase(DBConnectionString, username, email, hashedPassword, salt);
+                    if (EmailValidator(email))
+                    {
+                        (string hashedPassword, string salt) = HashPassword(password);
+                        RegisterUserInDatabase(DBConnectionString, username, email, hashedPassword, salt);
 
-                    regBtn.IsEnabled = false;
-                    logBtn.IsEnabled = true;
-                    chkRemember.Visibility = Visibility.Visible;
-                    lblEmail.Visibility = Visibility.Hidden;
-                    txtEmail.Visibility = Visibility.Hidden;
+                        txtPassword.Password = string.Empty;
+                        regBtn.IsEnabled = false;
+                        logBtn.IsEnabled = true;
+                        chkRemember.Visibility = Visibility.Visible;
+                        lblPassAgain.Visibility = Visibility.Hidden;
+                        txtPassAgain.Visibility = Visibility.Hidden;
+                        lblEmail.Visibility = Visibility.Hidden;
+                        txtEmail.Visibility = Visibility.Hidden;
+                    }
+                    else
+                    {
+                        MessageBox.Show("The E-mail is not in a correct format!", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
                 }
                 else
                 {
-                    MessageBox.Show("Az email cím formátuma nem megfelelő!", "Hiba!", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("The passwords do not match!", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             else
             {
-                MessageBox.Show("A felhasználónév és a jelszó nem lehet üres!", "Hiba!", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("The username, password and E-mail fields can not be empty!", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -265,7 +275,7 @@ namespace GameLauncher
 
             if (usernames.Contains(username))
             {
-                MessageBox.Show("A felhasználónév már foglalt!", "Hiba!", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("This username is already taken!", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             else
             {
