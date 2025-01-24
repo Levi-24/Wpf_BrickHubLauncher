@@ -52,11 +52,27 @@ namespace GameLauncher
 
         private void ToRegister_Click(object sender, RoutedEventArgs e)
         {
-            regBtn.IsEnabled = true;
-            logBtn.IsEnabled = false;
-            chkRemember.Visibility = Visibility.Hidden;
-            emailTxb.Visibility = Visibility.Visible;
-            emailTxt.Visibility = Visibility.Visible;
+            regBtn.IsEnabled = !regBtn.IsEnabled;
+            logBtn.IsEnabled = !logBtn.IsEnabled;
+            if (regBtn.IsEnabled)
+            {
+                toRegBtn.Content = "To Log In";
+                txtPassAgain.Visibility = Visibility.Visible;
+                lblPassAgain.Visibility = Visibility.Visible;
+                chkRemember.Visibility = Visibility.Hidden;
+                lblEmail.Visibility = Visibility.Visible;
+                txtEmail.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                toRegBtn.Content = "To Register";
+                txtPassAgain.Visibility = Visibility.Hidden;
+                lblPassAgain.Visibility = Visibility.Hidden;
+                chkRemember.Visibility = Visibility.Visible;
+                lblEmail.Visibility = Visibility.Hidden;
+                txtEmail.Visibility = Visibility.Hidden;
+            }
+
         }
         #endregion
 
@@ -154,20 +170,23 @@ namespace GameLauncher
         #region Register
         private void Register_Click(object sender, RoutedEventArgs e)
         {
-            regBtn.IsEnabled = false;
-            logBtn.IsEnabled = true;
-            chkRemember.Visibility = Visibility.Visible;
-            emailTxb.Visibility = Visibility.Hidden;
-            emailTxt.Visibility = Visibility.Hidden;
-
+            string username = txtUsername.Text;
+            string email = txtEmail.Text;
             string password = txtPassword.Password.ToString();
+            string passwordAgain = txtPassAgain.Password.ToString();
 
-            if (!string.IsNullOrEmpty(password) && !string.IsNullOrEmpty(txtUsername.ToString()) && !string.IsNullOrEmpty(emailTxb.ToString()))
+            if (!string.IsNullOrEmpty(password) && password == passwordAgain && !string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(email))
             {
-                if (EmailValidator(emailTxb.ToString()))
+                if (EmailValidator(email))
                 {
                     (string hashedPassword, string salt) = HashPassword(password);
-                    RegisterUserInDatabase(DBConnectionString, txtUsername.Text, emailTxb.Text, hashedPassword, salt);
+                    RegisterUserInDatabase(DBConnectionString, username, email, hashedPassword, salt);
+
+                    regBtn.IsEnabled = false;
+                    logBtn.IsEnabled = true;
+                    chkRemember.Visibility = Visibility.Visible;
+                    lblEmail.Visibility = Visibility.Hidden;
+                    txtEmail.Visibility = Visibility.Hidden;
                 }
                 else
                 {
