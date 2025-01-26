@@ -12,8 +12,8 @@ namespace GameLauncher
     public partial class MainWindow : Window
     {
         private ObservableCollection<Game> Games = new ObservableCollection<Game>();
-        private string ImageDirectory = Path.Combine(Environment.CurrentDirectory, "DownloadedImages");
-        private string GameDirectory = Path.Combine(Environment.CurrentDirectory, "DownloadedGames");
+        private string ImageDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DownloadedImages");
+        private string GameDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DownloadedGames");
         private const string GamePaths = "gamePaths.json";
         private const string SettingsFile = "user.settings";
         private const string connectionString = "Server=localhost;Database=launcher_test;Uid=root;Pwd=;";
