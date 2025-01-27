@@ -15,6 +15,7 @@
         <TextBlock x:Name="GameDescription" TextWrapping="Wrap" Margin="593,10,30,217" />
         <Button Visibility="Hidden" x:Name="LaunchButton" Content="Launch Game" Click="LaunchButton_Click" Margin="506,234,118,155" />
         <Button Content="Log Out" Click="LogOutButton_Click" Margin="700,234,10,155"/>
+        <Button Content="Uninstall" Click="UninstallButton_Click" Margin="510,364,200,25"/>
         <Button x:Name="DownloadButton" Visibility="Hidden" Content="Download" Click="DownloadButton_Click" Margin="315,234,310,155"/>
         <ProgressBar Visibility="Hidden" HorizontalAlignment="Left" x:Name="ProgressBar" Minimum="0" Maximum="100" Height="20" Margin="340,299,0,0" VerticalAlignment="Top" Width="430"/>
     </Grid>

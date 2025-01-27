@@ -1,64 +1,86 @@
 ﻿using System.Collections.ObjectModel;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media.Imaging;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Text.Json;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media.Imaging;
 using MySql.Data.MySqlClient;
 
 namespace GameLauncher
 {
     public partial class MainWindow : Window
     {
-        private ObservableCollection<Game> Games = new ObservableCollection<Game>();
-        private string ImageDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DownloadedImages");
-        private string GameDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DownloadedGames");
-        private const string GamePaths = "gamePaths.json";
+        private readonly ObservableCollection<Game> Games = new();
+        private readonly List<GameInstallationInfo> Executables = new();
+        private readonly string ImageDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DownloadedImages");
+        private readonly string GameDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DownloadedGames");
+        private static string InstallationFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "installedGames.json");
         private const string SettingsFile = "user.settings";
-        private const string connectionString = "Server=localhost;Database=launcher_test;Uid=root;Pwd=;";
+        private const string ConnectionString = "Server=localhost;Database=launcher_test;Uid=root;Pwd=;";
 
         public MainWindow()
         {
             InitializeComponent();
-            LoadGames();
+            LoadGamesAsync();
+            Executables = LoadGameExecutables();
             GamesList.ItemsSource = Games;
         }
 
-        private async void LoadGames()
+        private void LogOutButton_Click(object sender, RoutedEventArgs e)
         {
-            string query = "SELECT * FROM games";
+            File.Delete(SettingsFile);
+            LoginWindow loginWindow = new LoginWindow();
+            loginWindow.Show();
+            Close();
+        }
 
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+        private async void LoadGamesAsync()
+        {
+            try
             {
-                conn.Open();
-                using (MySqlCommand cmd = new MySqlCommand(query, conn))
-                {
-                    using (MySqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            int id = reader.GetInt32("id");
-                            string name = reader.GetString("name");
-                            string description = reader.GetString("description");
-                            string imageUrl = reader["image_path"] != DBNull.Value ? reader.GetString("image_path") : "https://i.postimg.cc/mDvhPW7C/NoImage.jpg";
-                            string downloadLink = reader["download_link"] != DBNull.Value ? reader.GetString("download_link") : null;
-                            string localImagePath = await DownloadImageAsync(imageUrl);
-                            DateTime releaseDate = reader.GetDateTime("release_date");
+                var query = "SELECT * FROM games";
+                using var conn = new MySqlConnection(ConnectionString);
+                await conn.OpenAsync();
 
-                            Games.Add(new Game(id, name, description, imageUrl, downloadLink, localImagePath, releaseDate));
-                        }
+                using var cmd = new MySqlCommand(query, conn);
+                using var reader = await cmd.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    var mySqlReader = reader as MySqlDataReader;
+                    if (mySqlReader != null)
+                    {
+                        var game = await ParseGameAsync(mySqlReader);
+                        Games.Add(game);
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading games: {ex.Message}");
+            }
+        }
+
+        private async Task<Game> ParseGameAsync(MySqlDataReader reader)
+        {
+            int id = reader.GetInt32("id");
+            string name = reader.GetString("name");
+            string description = reader.GetString("description");
+            string imageUrl = reader["image_path"] != DBNull.Value ? reader.GetString("image_path") : "https://i.postimg.cc/mDvhPW7C/NoImage.jpg";
+            string downloadLink = reader["download_link"] != DBNull.Value ? reader.GetString("download_link") : null;
+            string localImagePath = await DownloadImageAsync(imageUrl);
+            DateTime releaseDate = reader.GetDateTime("release_date");
+
+            return new Game(id, name, description, imageUrl, downloadLink, localImagePath, releaseDate);
         }
 
         private void GamesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (GamesList.SelectedItem is Game selectedGame)
             {
-                //User Interface
                 DownloadButton.IsEnabled = !string.IsNullOrEmpty(selectedGame.DownloadLink);
                 DownloadButton.Visibility = Visibility.Visible;
                 LaunchButton.Visibility = Visibility.Visible;
@@ -73,8 +95,7 @@ namespace GameLauncher
         {
             try
             {
-                if (!Directory.Exists(ImageDirectory))
-                    Directory.CreateDirectory(ImageDirectory);
+                EnsureDirectoryExists(ImageDirectory);
 
                 string fileName = Path.GetFileName(new Uri(url).LocalPath);
                 string localFilePath = Path.Combine(ImageDirectory, fileName);
@@ -82,102 +103,132 @@ namespace GameLauncher
                 if (File.Exists(localFilePath))
                     return localFilePath;
 
-                using (HttpClient client = new HttpClient())
-                {
-                    HttpResponseMessage response = await client.GetAsync(url);
-                    response.EnsureSuccessStatusCode();
+                using HttpClient client = new();
+                byte[] imageBytes = await client.GetByteArrayAsync(url);
+                await File.WriteAllBytesAsync(localFilePath, imageBytes);
 
-                    byte[] imageBytes = await response.Content.ReadAsByteArrayAsync();
-                    await File.WriteAllBytesAsync(localFilePath, imageBytes);
-
-                    return localFilePath;
-                }
+                return localFilePath;
             }
-            catch (Exception)
+            catch
             {
                 return Path.Combine(ImageDirectory, "NoImage.jpg");
             }
         }
 
+        //School version
+        //private async void DownloadButton_Click(object sender, RoutedEventArgs e)
+        //{
+        //    if (!Directory.Exists(GameDirectory))
+        //        Directory.CreateDirectory(GameDirectory);
+
+        //    Game selectedGame = Games[GamesList.SelectedIndex];
+        //    string fileUrl = selectedGame.DownloadLink;
+        //    string tempPath = Path.Combine(Path.GetTempPath(), selectedGame.Name + ".zip");
+        //    string targetPath = Path.Combine(GameDirectory, selectedGame.Name + ".zip");
+
+        //    //Directory select - add option to choose default or select
+        //    using (var dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog())
+        //    {
+        //        dialog.IsFolderPicker = true;
+        //        dialog.InitialDirectory = GameDirectory;
+        //        if (dialog.ShowDialog() == Microsoft.WindowsAPICodePack.Dialogs.CommonFileDialogResult.Ok)
+        //        {
+        //            targetPath = Path.Combine(dialog.FileName, selectedGame.Name + ".zip");
+        //        }
+        //        else return;
+        //    }
+
+        //    string installPath = targetPath.Remove(targetPath.Length - 4);
+        //    var progress = new Progress<double>(value => { ProgressBar.Value = value; });
+
+        //    try
+        //    {
+        //        if (!Directory.Exists(tempPath))
+        //        {
+        //            await DownloadFileWithProgressAsync(fileUrl, tempPath, progress);
+        //            File.Move(tempPath, targetPath);
+        //            ExtractZip(targetPath, installPath);
+
+        //            selectedGame.InstallPath = installPath;
+
+        //            MessageBox.Show($"Download completed!");
+        //        }
+        //        else
+        //        {
+        //            MessageBox.Show("The file is already downloaded!");
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        MessageBox.Show($"An error occurred: {ex.Message}");
+        //    }
+        //}
+
         private void LaunchButton_Click(object sender, RoutedEventArgs e)
         {
-            Games[GamesList.SelectedIndex].InstallPath = ReadPathJson(GamePaths);
-
-            if (Games[GamesList.SelectedIndex] != null && !string.IsNullOrEmpty(Games[GamesList.SelectedIndex].InstallPath))
+            if (GamesList.SelectedItem is Game selectedGame)
             {
-                string executablePath = Path.Combine(Games[GamesList.SelectedIndex].InstallPath);
+                List<GameInstallationInfo> gameInstallations = LoadGameExecutables();
 
-                if (File.Exists(executablePath))
-                    System.Diagnostics.Process.Start(executablePath);
+                var gameInfo = gameInstallations.FirstOrDefault(g => g.GameId == selectedGame.Id);
+
+                if (gameInfo != null && File.Exists(gameInfo.ExecutablePath))
+                {
+                    try
+                    {
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = gameInfo.ExecutablePath,
+                            UseShellExecute = true
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error launching the game: {ex.Message}");
+                    }
+                }
                 else
-                    MessageBox.Show("Game exe not found!");
+                {
+                    MessageBox.Show("Executable not found for the selected game.");
+                }
             }
-        }
-
-        private void LogOutButton_Click(object sender, RoutedEventArgs e)
-        {
-            File.Delete(SettingsFile);
-            LoginWindow loginWindow = new LoginWindow();
-            loginWindow.Show();
-            this.Close();
         }
 
         private async void DownloadButton_Click(object sender, RoutedEventArgs e)
         {
-            string fileUrl = Games[GamesList.SelectedIndex].DownloadLink;
-            string tempPath = Path.Combine(Path.GetTempPath(), "sample.zip");
-            //string targetPath = Path.Combine(GameDirectory, Games[GamesList.SelectedIndex].Name + ".zip");
-
-
-            //EZ A FILE DIRECTORY SELECT
-            string targetPath = "";
-            string installPath = "";
-
-            using (var dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog())
+            if (GamesList.SelectedItem is not Game selectedGame) return;
+            //Ez szar
+            //Ez a szar nem fut le ami itt van alattamˇˇˇˇˇ
+            //Ha már telepítve van de nyomok egy downloadot a filet nem tölti le viszont hozzáad egy exe pathet amit nem töröl majd uninstallnál így felhalmozódik
+            if (Executables.Where(x => x.GameId == selectedGame.Id).Count() != 0)
             {
-                dialog.IsFolderPicker = true;
-                if (dialog.ShowDialog() == Microsoft.WindowsAPICodePack.Dialogs.CommonFileDialogResult.Ok)
-                {
-                    installPath = dialog.FileName;
-                    targetPath = dialog.FileName + ".zip";
-                }
+                MessageBox.Show("This Game is already installed!");
+                return;
             }
 
-            if (!Directory.Exists(GameDirectory))
-                Directory.CreateDirectory(GameDirectory);
+            EnsureDirectoryExists(GameDirectory);
+            string targetPath = await SelectDownloadDirectoryAsync(selectedGame);
+            if (targetPath == null) return;
 
-            var progress = new Progress<double>(value => { ProgressBar.Value = value; });
+            string installPath = targetPath.Remove(targetPath.Length - 4);
 
             try
             {
-                await DownloadFileWithProgressAsync(fileUrl, tempPath, progress);
+                await DownloadAndInstallGameAsync(selectedGame, targetPath, installPath);
+                selectedGame.InstallPath = installPath;
 
-                if (File.Exists(tempPath))
+                string executablePath = Path.Combine(installPath, selectedGame.Name + ".exe");
+                var gameInfo = new GameInstallationInfo
                 {
-                    File.Move(tempPath, targetPath);
+                    GameId = selectedGame.Id,
+                    ExecutablePath = executablePath
+                };
 
-                    ExtractZip(targetPath, installPath);
+                var gameInstallations = LoadGameExecutables();
+                gameInstallations.Add(gameInfo);
+                SaveGameExecutables(gameInstallations);
 
-                    string originalFolderPath = installPath;
-                    string parentDirectory = Directory.GetParent(originalFolderPath).FullName;
-
-                    string[] subFolders = Directory.GetDirectories(originalFolderPath);
-
-                    string subFolderPath = subFolders[0];
-
-                    string newSubFolderPath = Path.Combine(parentDirectory, Path.GetFileName(subFolderPath));
-                    Directory.Move(subFolderPath, newSubFolderPath);
-
-                    Games[GamesList.SelectedIndex].InstallPath = newSubFolderPath + @"\" + Games[GamesList.SelectedIndex].Name + ".exe";
-                    await InstallPathToJsonAsync(GamePaths, newSubFolderPath + @"\" + Games[GamesList.SelectedIndex].Name + ".exe");
-
-                    Directory.Delete(originalFolderPath, true);
-                    MessageBox.Show($"Download completed!");
-                }
-                else
-                {
-                    MessageBox.Show("Downloaded file not found in the temporary path.");
-                }
+                MessageBox.Show("Download completed!");
             }
             catch (Exception ex)
             {
@@ -185,74 +236,142 @@ namespace GameLauncher
             }
         }
 
-        //Ezt meg kell nézni
+        private async Task<string> SelectDownloadDirectoryAsync(Game selectedGame)
+        {
+            using var dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog
+            {
+                IsFolderPicker = true,
+                InitialDirectory = GameDirectory
+            };
+
+            if (dialog.ShowDialog() == Microsoft.WindowsAPICodePack.Dialogs.CommonFileDialogResult.Ok)
+                return Path.Combine(dialog.FileName, $"{selectedGame.Name}.zip");
+
+            return null;
+        }
+
+        private async Task DownloadAndInstallGameAsync(Game game, string targetPath, string installPath)
+        {
+            if (Directory.Exists(installPath))
+            {
+                MessageBox.Show("The file is already downloaded!");
+                return;
+            }
+
+            var progress = new Progress<double>(value => ProgressBar.Value = value);
+            await DownloadFileWithProgressAsync(game.DownloadLink, targetPath, progress);
+            ExtractZip(targetPath, installPath);
+        }
+
         private async Task DownloadFileWithProgressAsync(string fileUrl, string destinationPath, IProgress<double> progress)
         {
-            using (HttpClient client = new HttpClient())
+            using HttpClient client = new();
+            using var response = await client.GetAsync(fileUrl, HttpCompletionOption.ResponseHeadersRead);
+            response.EnsureSuccessStatusCode();
+
+            long totalBytes = response.Content.Headers.ContentLength ?? -1L;
+            bool canReportProgress = totalBytes != -1 && progress != null;
+
+            using var contentStream = await response.Content.ReadAsStreamAsync();
+            using var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
+
+            byte[] buffer = new byte[8192];
+            long totalRead = 0;
+            int bytesRead;
+
+            while ((bytesRead = await contentStream.ReadAsync(buffer)) > 0)
             {
-                try
+                await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead));
+                totalRead += bytesRead;
+
+                if (canReportProgress)
                 {
-                    using (var response = await client.GetAsync(fileUrl, HttpCompletionOption.ResponseHeadersRead))
-                    {
-                        response.EnsureSuccessStatusCode();
-
-                        var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-                        var canReportProgress = totalBytes != -1 && progress != null;
-
-                        using (var contentStream = await response.Content.ReadAsStreamAsync())
-                        using (var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true))
-                        {
-                            var buffer = new byte[8192];
-                            long totalRead = 0;
-                            int bytesRead;
-
-                            while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
-                            {
-                                await fileStream.WriteAsync(buffer, 0, bytesRead);
-
-                                totalRead += bytesRead;
-
-                                if (canReportProgress)
-                                {
-                                    double percentage = (double)totalRead / totalBytes * 100;
-                                    progress.Report(percentage);
-                                }
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Error: {ex.Message}");
+                    double percentage = (double)totalRead / totalBytes * 100;
+                    progress.Report(percentage);
                 }
             }
         }
 
         public void ExtractZip(string zipFilePath, string installDirectory)
         {
-            if (!Directory.Exists(installDirectory))
-                Directory.CreateDirectory(installDirectory);
-
+            EnsureDirectoryExists(installDirectory);
             ZipFile.ExtractToDirectory(zipFilePath, installDirectory);
-
             File.Delete(zipFilePath);
         }
 
-
-        //Ne írja felül hanem appendeljen + adjoál hozzá id-t is
-        static async Task InstallPathToJsonAsync(string filePath, string gamePath)
+        private static void EnsureDirectoryExists(string directoryPath)
         {
-            string prevJson = ReadPathJson(filePath);
-            prevJson += "\n" + gamePath;
-            string json = JsonSerializer.Serialize(prevJson, new JsonSerializerOptions { WriteIndented = true });
-            await File.WriteAllTextAsync(filePath, json);
+            if (!Directory.Exists(directoryPath))
+                Directory.CreateDirectory(directoryPath);
         }
 
-        static string ReadPathJson(string filePath)
+        private void SaveGameExecutables(List<GameInstallationInfo> games)
         {
-            string json = File.ReadAllText(filePath);
-            string deserializedPath = JsonSerializer.Deserialize<string>(json);
-            return deserializedPath;
+            try
+            {
+                var json = JsonSerializer.Serialize(games);
+                File.WriteAllText(InstallationFilePath, json);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error saving game data: {ex.Message}");
+            }
+        }
+
+        private List<GameInstallationInfo> LoadGameExecutables()
+        {
+            try
+            {
+                if (File.Exists(InstallationFilePath))
+                {
+                    var json = File.ReadAllText(InstallationFilePath);
+                    return JsonSerializer.Deserialize<List<GameInstallationInfo>>(json) ?? new List<GameInstallationInfo>();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading game data: {ex.Message}");
+            }
+            return new List<GameInstallationInfo>();
+        }
+
+        private void UninstallButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (MessageBox.Show("Are you sure you want to uninstall this game?", "Confirm Uninstall", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {
+                if (GamesList.SelectedItem is not Game selectedGame) return;
+
+                var gameInstallations = LoadGameExecutables();
+
+                var gameInfo = gameInstallations.FirstOrDefault(g => g.GameId == selectedGame.Id);
+
+                if (gameInfo != null)
+                {
+                    try
+                    {
+                        gameInfo.ExecutablePath = gameInfo.ExecutablePath.Remove(gameInfo.ExecutablePath.Length - (Games[gameInfo.GameId].Name.Length + 5));
+
+                        if (Directory.Exists(gameInfo.ExecutablePath))
+                        {
+                            Directory.Delete(gameInfo.ExecutablePath, true);
+                        }
+
+                        gameInstallations.Remove(gameInfo);
+
+                        SaveGameExecutables(gameInstallations);
+
+                        MessageBox.Show("Game uninstalled successfully!");
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"An error occurred while uninstalling the game: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("The game is not found in the installed list.");
+                }
+            }
         }
     }
 }
