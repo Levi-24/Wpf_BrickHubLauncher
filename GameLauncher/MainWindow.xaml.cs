@@ -5,6 +5,7 @@ using System.Windows.Media.Imaging;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
+using System.Text.Json;
 using MySql.Data.MySqlClient;
 
 namespace GameLauncher
@@ -22,6 +23,8 @@ namespace GameLauncher
         {
             InitializeComponent();
             LoadGames();
+            List<string> paths = new();
+            paths.Add(ReadPathJson(GamePaths));
             GamesList.ItemsSource = Games;
         }
 
@@ -100,9 +103,11 @@ namespace GameLauncher
 
         private void LaunchButton_Click(object sender, RoutedEventArgs e)
         {
+            Games[GamesList.SelectedIndex].InstallPath = ReadPathJson(GamePaths);
+
             if (Games[GamesList.SelectedIndex] != null && !string.IsNullOrEmpty(Games[GamesList.SelectedIndex].InstallPath))
             {
-                string executablePath = Path.Combine(Games[GamesList.SelectedIndex].InstallPath, "Top Down Game.exe");
+                string executablePath = Path.Combine(Games[GamesList.SelectedIndex].InstallPath);
 
                 if (File.Exists(executablePath))
                     System.Diagnostics.Process.Start(executablePath);
@@ -123,20 +128,22 @@ namespace GameLauncher
         {
             string fileUrl = Games[GamesList.SelectedIndex].DownloadLink;
             string tempPath = Path.Combine(Path.GetTempPath(), "sample.zip");
-            string targetPath = Path.Combine(GameDirectory, Games[GamesList.SelectedIndex].Name + ".zip");
-            string installPath = Path.Combine(GameDirectory, Games[GamesList.SelectedIndex].Name);
+            //string targetPath = Path.Combine(GameDirectory, Games[GamesList.SelectedIndex].Name + ".zip");
+
 
             //EZ A FILE DIRECTORY SELECT
-            //string targetDirectory = "";
+            string targetPath = "";
+            string installPath = "";
 
-            //using (var dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog())
-            //{
-            //    dialog.IsFolderPicker = true;
-            //    if (dialog.ShowDialog() == Microsoft.WindowsAPICodePack.Dialogs.CommonFileDialogResult.Ok)
-            //    {
-            //        targetDirectory = dialog.FileName;
-            //    }
-            //}
+            using (var dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog())
+            {
+                dialog.IsFolderPicker = true;
+                if (dialog.ShowDialog() == Microsoft.WindowsAPICodePack.Dialogs.CommonFileDialogResult.Ok)
+                {
+                    installPath = dialog.FileName;
+                    targetPath = dialog.FileName + ".zip";
+                }
+            }
 
             if (!Directory.Exists(GameDirectory))
                 Directory.CreateDirectory(GameDirectory);
@@ -163,7 +170,8 @@ namespace GameLauncher
                     string newSubFolderPath = Path.Combine(parentDirectory, Path.GetFileName(subFolderPath));
                     Directory.Move(subFolderPath, newSubFolderPath);
 
-                    File.WriteAllText(GamePaths, newSubFolderPath + @"\Top Down Game.exe");
+                    Games[GamesList.SelectedIndex].InstallPath = newSubFolderPath + @"\" + Games[GamesList.SelectedIndex].Name + ".exe";
+                    await InstallPathToJsonAsync(GamePaths, newSubFolderPath + @"\" + Games[GamesList.SelectedIndex].Name + ".exe");
 
                     Directory.Delete(originalFolderPath, true);
                     MessageBox.Show($"Download completed!");
@@ -230,6 +238,21 @@ namespace GameLauncher
             ZipFile.ExtractToDirectory(zipFilePath, installDirectory);
 
             File.Delete(zipFilePath);
+        }
+
+
+        //Ne írja felül hanem appendeljen + adjoál hozzá id-t is
+        static async Task InstallPathToJsonAsync(string filePath, string gamePath)
+        {
+            string json = JsonSerializer.Serialize(gamePath, new JsonSerializerOptions { WriteIndented = true });
+            await File.WriteAllTextAsync(filePath, json);
+        }
+
+        static string ReadPathJson(string filePath)
+        {
+            string json = File.ReadAllText(filePath);
+            string deserializedPath = JsonSerializer.Deserialize<string>(json);
+            return deserializedPath;
         }
     }
 }
