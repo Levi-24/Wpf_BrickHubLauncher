@@ -198,10 +198,6 @@ namespace GameLauncher
         {
             if (GamesList.SelectedItem is not Game selectedGame) return;
             //Ez szar
-
-
-
-
             //Ez a szar nem fut le ami itt van alattamˇˇˇˇˇ
             //Ha már telepítve van de nyomok egy downloadot a filet nem tölti le viszont hozzáad egy exe pathet amit nem töröl majd uninstallnál így felhalmozódik
             if (Executables.Where(x => x.GameId == selectedGame.Id).Count() != 0)
