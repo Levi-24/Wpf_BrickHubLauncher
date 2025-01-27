@@ -23,8 +23,6 @@ namespace GameLauncher
         {
             InitializeComponent();
             LoadGames();
-            List<string> paths = new();
-            paths.Add(ReadPathJson(GamePaths));
             GamesList.ItemsSource = Games;
         }
 
@@ -244,7 +242,9 @@ namespace GameLauncher
         //Ne írja felül hanem appendeljen + adjoál hozzá id-t is
         static async Task InstallPathToJsonAsync(string filePath, string gamePath)
         {
-            string json = JsonSerializer.Serialize(gamePath, new JsonSerializerOptions { WriteIndented = true });
+            string prevJson = ReadPathJson(filePath);
+            prevJson += "\n" + gamePath;
+            string json = JsonSerializer.Serialize(prevJson, new JsonSerializerOptions { WriteIndented = true });
             await File.WriteAllTextAsync(filePath, json);
         }
 
