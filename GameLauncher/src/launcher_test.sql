@@ -8,7 +8,7 @@ CREATE TABLE `games` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `games` (`id`, `name`, `description`, `image_path`, `download_link`, `release_date`) VALUES
-(0, 'GTA V', 'This is the Grand Theft Auto Series latest games.', 'https://pngimg.com/uploads/gta/gta_PNG13.png', 'https://files.catbox.moe/7ahz5m.zip', '2011-07-20 08:21:09');
+(0, 'Top Down Game', 'This is the Grand Theft Auto Series latest games.', 'https://pngimg.com/uploads/gta/gta_PNG13.png', 'https://www.dropbox.com/scl/fi/ldw8hbhpknqjpvhby2oeq/Top-Down-Game.zip?rlkey=47x882ac6mc6i4lt4qofrcsdz&st=2vd07gh3&dl=1', '2011-07-20 08:21:09');
 
 CREATE TABLE `users` (
   `id` int(11) NOT NULL,
