@@ -14,7 +14,7 @@ namespace GameLauncher
     public partial class MainWindow : Window
     {
         private readonly ObservableCollection<Game> Games = new();
-        private readonly List<GameInstallationInfo> Executables = new();
+        private List<GameInstallationInfo> Executables = new();
         private readonly string ImageDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DownloadedImages");
         private readonly string GameDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DownloadedGames");
         private static string InstallationFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "installedGames.json");
@@ -168,9 +168,9 @@ namespace GameLauncher
         {
             if (GamesList.SelectedItem is Game selectedGame)
             {
-                List<GameInstallationInfo> gameInstallations = LoadGameExecutables();
+                Executables = LoadGameExecutables();
 
-                var gameInfo = gameInstallations.FirstOrDefault(g => g.GameId == selectedGame.Id);
+                var gameInfo = Executables.FirstOrDefault(g => g.GameId == selectedGame.Id);
 
                 if (gameInfo != null && File.Exists(gameInfo.ExecutablePath))
                 {
@@ -194,12 +194,12 @@ namespace GameLauncher
             }
         }
 
+        // Az a helyzet hogy a legbiztosabb mód(jelenleg) a game exe megtalálásáre az az hogy ha a játék neve és az exe neve megyegyezik teljesen
+
         private async void DownloadButton_Click(object sender, RoutedEventArgs e)
         {
             if (GamesList.SelectedItem is not Game selectedGame) return;
-            //Ez szar
-            //Ez a szar nem fut le ami itt van alattamˇˇˇˇˇ
-            //Ha már telepítve van de nyomok egy downloadot a filet nem tölti le viszont hozzáad egy exe pathet amit nem töröl majd uninstallnál így felhalmozódik
+
             if (Executables.Where(x => x.GameId == selectedGame.Id).Count() != 0)
             {
                 MessageBox.Show("This Game is already installed!");
@@ -229,6 +229,7 @@ namespace GameLauncher
                 SaveGameExecutables(gameInstallations);
 
                 MessageBox.Show("Download completed!");
+                Executables = LoadGameExecutables();
             }
             catch (Exception ex)
             {
@@ -361,6 +362,8 @@ namespace GameLauncher
                         SaveGameExecutables(gameInstallations);
 
                         MessageBox.Show("Game uninstalled successfully!");
+
+                        Executables = LoadGameExecutables();
                     }
                     catch (Exception ex)
                     {
