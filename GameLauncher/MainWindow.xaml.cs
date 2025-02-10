@@ -24,6 +24,7 @@ namespace GameLauncher
         public MainWindow()
         {
             InitializeComponent();
+            DownloadImageAsync("https://i.postimg.cc/mDvhPW7C/NoImage.jpg");
             LoadGamesAsync();
             Executables = LoadGameExecutables();
             GamesList.ItemsSource = Games;
