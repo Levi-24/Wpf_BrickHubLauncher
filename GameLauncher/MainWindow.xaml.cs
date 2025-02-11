@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Dynamic;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
@@ -19,15 +20,46 @@ namespace GameLauncher
         private readonly string GameDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DownloadedGames");
         private static string InstallationFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "installedGames.json");
         private const string SettingsFile = "user.settings";
-        private const string ConnectionString = "Server=localhost;Database=launcher_test;Uid=root;Pwd=;";
+        private const string ConnectionString = "Server=localhost;Database=game_launcher;Uid=root;Pwd=;";
+        private readonly int userId;
+        private DateTime gameStartTime;
+        private int totalPlaytimeMinutes;
 
         public MainWindow()
         {
             InitializeComponent();
             DownloadImageAsync("https://i.postimg.cc/mDvhPW7C/NoImage.jpg");
             LoadGamesAsync();
+            userId = GetUserId();
             Executables = LoadGameExecutables();
             GamesList.ItemsSource = Games;
+        }
+
+        private int GetUserId()
+        {
+            using (MySqlConnection connection = new MySqlConnection(ConnectionString))
+            {
+                connection.Open();
+                using StreamReader reader = new StreamReader(SettingsFile);
+                string fullSettings = reader.ReadToEnd();
+                string[] pieces = fullSettings.Split(';');
+
+                string savedUsername = pieces[0];
+                string query = $"SELECT id FROM users WHERE username = '{savedUsername}';";
+
+                using (MySqlCommand cmd = new MySqlCommand(query, connection))
+                {
+                    return (int)cmd.ExecuteScalar();
+                }
+            }
+            //else
+            //{
+            //    MessageBox.Show("User not found. Please log in again.");
+            //    LoginWindow loginWindow = new LoginWindow();
+            //    loginWindow.Show();
+            //    Close();
+            //    return 0;
+            //}
         }
 
         private void LogOutButton_Click(object sender, RoutedEventArgs e)
@@ -69,13 +101,14 @@ namespace GameLauncher
         {
             int id = reader.GetInt32("id");
             string name = reader.GetString("name");
+            string exeName = reader.GetString("exe_name");
             string description = reader.GetString("description");
             string imageUrl = reader["image_path"] != DBNull.Value ? reader.GetString("image_path") : "https://i.postimg.cc/mDvhPW7C/NoImage.jpg";
             string downloadLink = reader["download_link"] != DBNull.Value ? reader.GetString("download_link") : null;
             string localImagePath = await DownloadImageAsync(imageUrl);
             DateTime releaseDate = reader.GetDateTime("release_date");
 
-            return new Game(id, name, description, imageUrl, downloadLink, localImagePath, releaseDate);
+            return new Game(id, name, exeName, description, imageUrl, downloadLink, localImagePath, releaseDate);
         }
 
         private void GamesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -116,72 +149,31 @@ namespace GameLauncher
             }
         }
 
-        //School version
-        //private async void DownloadButton_Click(object sender, RoutedEventArgs e)
-        //{
-        //    if (!Directory.Exists(GameDirectory))
-        //        Directory.CreateDirectory(GameDirectory);
-
-        //    Game selectedGame = Games[GamesList.SelectedIndex];
-        //    string fileUrl = selectedGame.DownloadLink;
-        //    string tempPath = Path.Combine(Path.GetTempPath(), selectedGame.Name + ".zip");
-        //    string targetPath = Path.Combine(GameDirectory, selectedGame.Name + ".zip");
-
-        //    //Directory select - add option to choose default or select
-        //    using (var dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog())
-        //    {
-        //        dialog.IsFolderPicker = true;
-        //        dialog.InitialDirectory = GameDirectory;
-        //        if (dialog.ShowDialog() == Microsoft.WindowsAPICodePack.Dialogs.CommonFileDialogResult.Ok)
-        //        {
-        //            targetPath = Path.Combine(dialog.FileName, selectedGame.Name + ".zip");
-        //        }
-        //        else return;
-        //    }
-
-        //    string installPath = targetPath.Remove(targetPath.Length - 4);
-        //    var progress = new Progress<double>(value => { ProgressBar.Value = value; });
-
-        //    try
-        //    {
-        //        if (!Directory.Exists(tempPath))
-        //        {
-        //            await DownloadFileWithProgressAsync(fileUrl, tempPath, progress);
-        //            File.Move(tempPath, targetPath);
-        //            ExtractZip(targetPath, installPath);
-
-        //            selectedGame.InstallPath = installPath;
-
-        //            MessageBox.Show($"Download completed!");
-        //        }
-        //        else
-        //        {
-        //            MessageBox.Show("The file is already downloaded!");
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        MessageBox.Show($"An error occurred: {ex.Message}");
-        //    }
-        //}
-
         private void LaunchButton_Click(object sender, RoutedEventArgs e)
         {
             if (GamesList.SelectedItem is Game selectedGame)
             {
                 Executables = LoadGameExecutables();
-
                 var gameInfo = Executables.FirstOrDefault(g => g.GameId == selectedGame.Id);
 
                 if (gameInfo != null && File.Exists(gameInfo.ExecutablePath))
                 {
                     try
                     {
-                        Process.Start(new ProcessStartInfo
+                        Process gameProcess = new Process
                         {
-                            FileName = gameInfo.ExecutablePath,
-                            UseShellExecute = true
-                        });
+                            StartInfo = new ProcessStartInfo
+                            {
+                                FileName = gameInfo.ExecutablePath,
+                                UseShellExecute = true
+                            },
+                            EnableRaisingEvents = true
+                        };
+
+                        gameStartTime = DateTime.Now;
+
+                        gameProcess.Exited += (s, args) => OnGameExit(selectedGame.Name, selectedGame.Id);
+                        gameProcess.Start();
                     }
                     catch (Exception ex)
                     {
@@ -195,7 +187,57 @@ namespace GameLauncher
             }
         }
 
-        // Az a helyzet hogy a legbiztosabb mód(jelenleg) a game exe megtalálásáre az az hogy ha a játék neve és az exe neve megyegyezik teljesen
+        private void OnGameExit(string gameName, int gameID)
+        {
+            try
+            {
+                TimeSpan playDuration = DateTime.Now - gameStartTime;
+                int minutesPlayed = (int)playDuration.TotalMinutes;
+
+                totalPlaytimeMinutes += minutesPlayed;
+
+                DateTime lastPlayed = DateTime.Now;
+
+                SavePlaytimeToDatabase(userId, gameID, minutesPlayed, lastPlayed);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error tracking playtime: {ex.Message}");
+            }
+        }
+
+        private void SavePlaytimeToDatabase(int userId, int gameId, int minutesPlayed, DateTime lastPlayed)
+        {
+
+            try
+            {
+                using (MySqlConnection connection = new MySqlConnection(ConnectionString))
+                {
+                    connection.Open();
+
+                    string query = @"
+                        INSERT INTO playtime (user_id, game_id, playtime_minutes, last_played)
+                        VALUES (@UserId, @GameId, @MinutesPlayed, @LastPlayed)
+                        ON DUPLICATE KEY UPDATE 
+                        playtime_minutes = playtime_minutes + VALUES(playtime_minutes),
+                        last_played = VALUES(last_played);";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, connection))
+                    {
+                        cmd.Parameters.AddWithValue("@UserId", userId);
+                        cmd.Parameters.AddWithValue("@GameId", gameId);
+                        cmd.Parameters.AddWithValue("@MinutesPlayed", minutesPlayed);
+                        cmd.Parameters.AddWithValue("@LastPlayed", lastPlayed);
+
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Database error: {ex.Message}");
+            }
+        }
 
         private async void DownloadButton_Click(object sender, RoutedEventArgs e)
         {
@@ -218,10 +260,11 @@ namespace GameLauncher
                 await DownloadAndInstallGameAsync(selectedGame, targetPath, installPath);
                 selectedGame.InstallPath = installPath;
 
-                string executablePath = Path.Combine(installPath, selectedGame.Name + ".exe");
+                string executablePath = Path.Combine(installPath, selectedGame.ExeName);
                 var gameInfo = new GameInstallationInfo
                 {
                     GameId = selectedGame.Id,
+                    ExeName = selectedGame.ExeName,
                     ExecutablePath = executablePath
                 };
 
@@ -351,7 +394,7 @@ namespace GameLauncher
                 {
                     try
                     {
-                        gameInfo.ExecutablePath = gameInfo.ExecutablePath.Remove(gameInfo.ExecutablePath.Length - (Games[gameInfo.GameId].Name.Length + 5));
+                        gameInfo.ExecutablePath = gameInfo.ExecutablePath.Remove(gameInfo.ExecutablePath.Length - gameInfo.ExeName.Length);
 
                         if (Directory.Exists(gameInfo.ExecutablePath))
                         {

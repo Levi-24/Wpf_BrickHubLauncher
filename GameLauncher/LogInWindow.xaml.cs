@@ -10,7 +10,7 @@ namespace GameLauncher
 {
     public partial class LoginWindow : Window
     {
-        private const string DBConnectionString = "server=localhost;uid=root;pwd=;database=launcher_test";
+        private const string DBConnectionString = "server=localhost;uid=root;pwd=;database=game_launcher";
         private const string SettingsFile = "user.settings";
 
         public LoginWindow()
