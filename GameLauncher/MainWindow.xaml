@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Game Launcher" Height="450" Width="800">
     <Grid>
-        <ListView x:Name="GamesList" HorizontalAlignment="Left" Width="300" SelectionChanged="GamesList_SelectionChanged">
+        <ListView x:Name="GamesList" HorizontalAlignment="Left" Width="300" SelectionChanged="GamesList_SelectionChanged" Margin="0,44,0,0">
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="Game Name" DisplayMemberBinding="{Binding Name}" />
@@ -18,5 +18,12 @@
         <Button Content="Uninstall" Click="UninstallButton_Click" Margin="510,364,200,25"/>
         <Button x:Name="DownloadButton" Visibility="Hidden" Content="Download" Click="DownloadButton_Click" Margin="315,234,310,155"/>
         <ProgressBar Visibility="Hidden" HorizontalAlignment="Left" x:Name="ProgressBar" Minimum="0" Maximum="100" Height="20" Margin="340,299,0,0" VerticalAlignment="Top" Width="430"/>
+        <Label x:Name="lblReleaseDate" HorizontalAlignment="Left" Margin="644,361,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="lblDev" HorizontalAlignment="Left" Margin="391,316,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="lblPublisher" HorizontalAlignment="Left" Margin="386,348,0,0" VerticalAlignment="Top"/>
+        <Label Content="Developer:" HorizontalAlignment="Left" Margin="320,316,0,0" VerticalAlignment="Top"/>
+        <Label Content="Publisher:" HorizontalAlignment="Left" Margin="320,348,0,0" VerticalAlignment="Top"/>
+        <Button Content="Profile" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Height="29" Width="70" Click="Button_Click"/>
+        <Button Content="Review" HorizontalAlignment="Left" Margin="95,10,0,0" VerticalAlignment="Top" Height="29" Width="80" Click="Button_Click_1"/>
     </Grid>
 </Window>

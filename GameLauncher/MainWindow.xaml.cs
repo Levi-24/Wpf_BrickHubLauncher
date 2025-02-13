@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -73,7 +74,12 @@ namespace GameLauncher
         {
             try
             {
-                var query = "SELECT * FROM games";
+                var query = @"SELECT g.*, 
+                              dev.name AS developer_name, 
+                              pub.name AS publisher_name
+                            FROM games g
+                              JOIN members dev ON g.developer_id = dev.id
+                              JOIN members pub ON g.publisher_id = pub.id";
                 using var conn = new MySqlConnection(ConnectionString);
                 await conn.OpenAsync();
 
@@ -106,8 +112,10 @@ namespace GameLauncher
             string downloadLink = reader["download_link"] != DBNull.Value ? reader.GetString("download_link") : null;
             string localImagePath = await DownloadImageAsync(imageUrl);
             DateTime releaseDate = reader.GetDateTime("release_date");
+            string developerName = reader.GetString("developer_name");
+            string publisherName = reader.GetString("publisher_name");
 
-            return new Game(id, name, exeName, description, imageUrl, downloadLink, localImagePath, releaseDate);
+            return new Game(id, name, exeName, description, imageUrl, downloadLink, localImagePath, releaseDate, developerName, publisherName);
         }
 
         private void GamesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -115,6 +123,9 @@ namespace GameLauncher
             if (GamesList.SelectedItem is Game selectedGame)
             {
                 DownloadButton.IsEnabled = !string.IsNullOrEmpty(selectedGame.DownloadLink);
+                lblReleaseDate.Content = selectedGame.ReleaseDate.ToString("yyyy MMMM dd.");
+                lblDev.Content = selectedGame.DeveloperName;
+                lblPublisher.Content = selectedGame.PublisherName;
                 DownloadButton.Visibility = Visibility.Visible;
                 LaunchButton.Visibility = Visibility.Visible;
                 ProgressBar.Visibility = Visibility.Visible;
@@ -417,6 +428,25 @@ namespace GameLauncher
                 {
                     MessageBox.Show("The game is not found in the installed list.");
                 }
+            }
+        }
+
+        private async void Button_Click(object sender, RoutedEventArgs e)
+        {
+            Profile profileWindow = new Profile();
+            profileWindow.Show();
+        }
+
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            if (GamesList.SelectedItem is Game selectedGame)
+            {
+                Review review = new Review(selectedGame.Id);
+                review.Show();
+            }
+            else
+            {
+                MessageBox.Show("No game selected!");
             }
         }
     }

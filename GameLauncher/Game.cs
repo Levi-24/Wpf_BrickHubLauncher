@@ -11,8 +11,10 @@
         public string InstallPath { get; set; }
         public string LocalImagePath { get; set; }
         public DateTime ReleaseDate { get; set; }
+        public string DeveloperName { get; set; }
+        public string PublisherName { get; set; }
 
-        public Game(int id, string name, string exeName, string description, string imageUrl, string downloadLink, string localImagePath, DateTime releaseDate)
+        public Game(int id, string name, string exeName, string description, string imageUrl, string downloadLink, string localImagePath, DateTime releaseDate, string developerName, string publisherName)
         {
             Id = id;
             Name = name;
@@ -22,6 +24,8 @@
             DownloadLink = downloadLink;
             LocalImagePath = localImagePath;
             ReleaseDate = releaseDate;
+            DeveloperName = developerName;
+            PublisherName = publisherName;
         }
     }
 }
