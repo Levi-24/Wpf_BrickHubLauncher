@@ -25,5 +25,6 @@
         <Label Content="Publisher:" HorizontalAlignment="Left" Margin="320,348,0,0" VerticalAlignment="Top"/>
         <Button Content="Profile" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Height="29" Width="70" Click="Button_Click"/>
         <Button Content="Review" HorizontalAlignment="Left" Margin="95,10,0,0" VerticalAlignment="Top" Height="29" Width="80" Click="Button_Click_1"/>
+        <Label x:Name="lblPlaytime" Content="0 Perc" HorizontalAlignment="Left" Margin="320,379,0,0" VerticalAlignment="Top"/>
     </Grid>
 </Window>

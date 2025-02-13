@@ -13,8 +13,9 @@
         public DateTime ReleaseDate { get; set; }
         public string DeveloperName { get; set; }
         public string PublisherName { get; set; }
+        public int PlayTime { get; set; }
 
-        public Game(int id, string name, string exeName, string description, string imageUrl, string downloadLink, string localImagePath, DateTime releaseDate, string developerName, string publisherName)
+        public Game(int id, string name, string exeName, string description, string imageUrl, string downloadLink, string localImagePath, DateTime releaseDate, string developerName, string publisherName, int playTime)
         {
             Id = id;
             Name = name;
@@ -26,6 +27,7 @@
             ReleaseDate = releaseDate;
             DeveloperName = developerName;
             PublisherName = publisherName;
+            PlayTime = playTime;
         }
     }
 }

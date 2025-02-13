@@ -7,11 +7,13 @@
         mc:Ignorable="d"
         Title="Review" Height="450" Width="800">
     <Grid>
-        <TextBox x:Name="txbContent" HorizontalAlignment="Left" Margin="35,139,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="530" Height="235" FontSize="18"/>
-        <Slider x:Name="sldrRating" TickFrequency="1" IsSnapToTickEnabled="True" Value="1" Maximum="10" Minimum="1" HorizontalAlignment="Left" Margin="35,116,0,0" VerticalAlignment="Top" Width="120" ValueChanged="sldrRating_ValueChanged"/>
-        <Label x:Name="lblRating" Content="1" HorizontalAlignment="Left" Margin="160,112,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name="txbTitle" HorizontalAlignment="Left" Margin="35,64,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="340" Height="43" FontSize="24"/>
-        <Label x:Name="lblGameName" Content="Label" HorizontalAlignment="Left" Margin="35,10,0,0" VerticalAlignment="Top" FontSize="20" Width="340"/>
+        <TextBox x:Name="txbContent" HorizontalAlignment="Left" Margin="35,139,0,0" TextWrapping="Wrap" Text="Content" VerticalAlignment="Top" Width="530" Height="235" FontSize="18"/>
+        <Slider x:Name="sldrRating" TickFrequency="1" IsSnapToTickEnabled="True" Value="1" Maximum="10" Minimum="1" HorizontalAlignment="Left" Margin="119,112,0,0" VerticalAlignment="Top" Width="120" ValueChanged="sldrRating_ValueChanged"/>
+        <Label x:Name="lblRating" Content="1" HorizontalAlignment="Left" Margin="244,108,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="txbTitle" HorizontalAlignment="Left" Margin="35,64,0,0" TextWrapping="Wrap" Text="Title" VerticalAlignment="Top" Width="340" Height="43" FontSize="24"/>
+        <Label x:Name="lblGameName" Content="GameName" HorizontalAlignment="Left" Margin="35,10,0,0" VerticalAlignment="Top" FontSize="20" Width="340"/>
+        <Label Content="Rating (1-10)" HorizontalAlignment="Left" Margin="35,108,0,0" VerticalAlignment="Top"/>
+        <Button x:Name="btnSubmit" Content="Submit" HorizontalAlignment="Left" Margin="640,359,0,0" VerticalAlignment="Top" Height="50" Width="110" Click="btnSubmit_Click"/>
 
     </Grid>
 </Window>

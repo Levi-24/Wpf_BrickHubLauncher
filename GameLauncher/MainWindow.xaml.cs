@@ -37,29 +37,33 @@ namespace GameLauncher
 
         private int GetUserId()
         {
-            using (MySqlConnection connection = new MySqlConnection(ConnectionString))
+            try
             {
-                connection.Open();
-                using StreamReader reader = new StreamReader(SettingsFile);
-                string fullSettings = reader.ReadToEnd();
-                string[] pieces = fullSettings.Split(';');
-
-                string savedUsername = pieces[0];
-                string query = $"SELECT id FROM users WHERE username = '{savedUsername}';";
-
-                using (MySqlCommand cmd = new MySqlCommand(query, connection))
+                using (MySqlConnection connection = new MySqlConnection(ConnectionString))
                 {
-                    return (int)cmd.ExecuteScalar();
+                    connection.Open();
+                    using StreamReader reader = new StreamReader(SettingsFile);
+                    string fullSettings = reader.ReadToEnd();
+                    string[] pieces = fullSettings.Split(';');
+
+                    string savedUsername = pieces[0];
+                    string query = $"SELECT id FROM users WHERE username = '{savedUsername}';";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, connection))
+                    {
+                        return (int)cmd.ExecuteScalar();
+                    }
                 }
             }
-            //else
-            //{
-            //    MessageBox.Show("User not found. Please log in again.");
-            //    LoginWindow loginWindow = new LoginWindow();
-            //    loginWindow.Show();
-            //    Close();
-            //    return 0;
-            //}
+            catch (Exception)
+            {
+                MessageBox.Show("User not found. Please log in again.");
+                LoginWindow loginWindow = new LoginWindow();
+                loginWindow.Show();
+                Close();
+                return 0;
+                throw;
+            }
         }
 
         private void LogOutButton_Click(object sender, RoutedEventArgs e)
@@ -91,7 +95,8 @@ namespace GameLauncher
                     var mySqlReader = reader as MySqlDataReader;
                     if (mySqlReader != null)
                     {
-                        var game = await ParseGameAsync(mySqlReader);
+                        int playTime = LoadPlaytime(mySqlReader.GetInt32("id"));
+                        var game = await ParseGameAsync(mySqlReader, playTime);
                         Games.Add(game);
                     }
                 }
@@ -102,7 +107,31 @@ namespace GameLauncher
             }
         }
 
-        private async Task<Game> ParseGameAsync(MySqlDataReader reader)
+        private int LoadPlaytime(int gameId)
+        {
+            try
+            {
+                using (MySqlConnection connection = new MySqlConnection(ConnectionString))
+                {
+                    connection.Open();
+
+                    string query = @$"SELECT playtime.playtime_minutes FROM playtime 
+                                    INNER JOIN users ON playtime.user_id = users.id 
+                                    WHERE users.id = {userId} AND game_id = {gameId};";
+                    using (MySqlCommand cmd = new MySqlCommand(query, connection))
+                    {
+                        return (int)cmd.ExecuteScalar();
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Database ERROR!");;
+                throw;
+            }
+        }
+
+        private async Task<Game> ParseGameAsync(MySqlDataReader reader, int playTime)
         {
             int id = reader.GetInt32("id");
             string name = reader.GetString("name");
@@ -115,7 +144,7 @@ namespace GameLauncher
             string developerName = reader.GetString("developer_name");
             string publisherName = reader.GetString("publisher_name");
 
-            return new Game(id, name, exeName, description, imageUrl, downloadLink, localImagePath, releaseDate, developerName, publisherName);
+            return new Game(id, name, exeName, description, imageUrl, downloadLink, localImagePath, releaseDate, developerName, publisherName, playTime);
         }
 
         private void GamesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -131,6 +160,8 @@ namespace GameLauncher
                 ProgressBar.Visibility = Visibility.Visible;
                 ProgressBar.Value = 0;
                 GameDescription.Text = selectedGame.Description;
+                //Valahogy frissíteni kéne a playtime-ot a játék bezárása után
+                lblPlaytime.Content = $"Playtime: {selectedGame.PlayTime} minutes";
                 GameImage.Source = new BitmapImage(new Uri(selectedGame.LocalImagePath));
             }
         }
@@ -433,7 +464,7 @@ namespace GameLauncher
 
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
-            Profile profileWindow = new Profile();
+            Profile profileWindow = new Profile(userId);
             profileWindow.Show();
         }
 
@@ -441,7 +472,7 @@ namespace GameLauncher
         {
             if (GamesList.SelectedItem is Game selectedGame)
             {
-                Review review = new Review(selectedGame.Id);
+                Review review = new Review(selectedGame.Id, userId);
                 review.Show();
             }
             else

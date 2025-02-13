@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GameLauncher"
         mc:Ignorable="d"
-        Title="Profile" Height="450" Width="300">
+        Title="Profile" Height="250" Width="200">
     <Grid>
         <Label x:Name="lblName" Content="Label" HorizontalAlignment="Left" Margin="27,28,0,0" VerticalAlignment="Top"/>
         <Label x:Name="lblUsername" Content="Label" HorizontalAlignment="Left" Margin="27,67,0,0" VerticalAlignment="Top"/>
