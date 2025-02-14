@@ -1,6 +1,5 @@
 ﻿using MySql.Data.MySqlClient;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Windows;
 
 namespace GameLauncher

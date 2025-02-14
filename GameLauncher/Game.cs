@@ -1,4 +1,6 @@
-﻿namespace GameLauncher
+﻿using System.Text.Json.Serialization;
+
+namespace GameLauncher
 {
     internal class Game
     {
@@ -14,8 +16,11 @@
         public string DeveloperName { get; set; }
         public string PublisherName { get; set; }
         public int PlayTime { get; set; }
+        public double Rating { get; set; }
+        public string ExecutablePath { get; set; }
 
-        public Game(int id, string name, string exeName, string description, string imageUrl, string downloadLink, string localImagePath, DateTime releaseDate, string developerName, string publisherName, int playTime)
+        //For storing game data in collection
+        public Game(int id, string name, string exeName, string description, string imageUrl, string downloadLink, string localImagePath, DateTime releaseDate, string developerName, string publisherName, int playTime, double rating)
         {
             Id = id;
             Name = name;
@@ -28,6 +33,16 @@
             DeveloperName = developerName;
             PublisherName = publisherName;
             PlayTime = playTime;
+            Rating = rating;
+        }
+
+        //For saving executable path in json file
+        [JsonConstructor]
+        public Game(int id, string exeName, string executablePath)
+        {
+            Id = id;
+            ExeName = exeName;
+            ExecutablePath = executablePath;
         }
     }
 }

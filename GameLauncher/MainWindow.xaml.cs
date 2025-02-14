@@ -15,7 +15,7 @@ namespace GameLauncher
     public partial class MainWindow : Window
     {
         private readonly ObservableCollection<Game> Games = new();
-        private List<GameInstallationInfo> Executables = new();
+        private List<Game> Executables = new();
         private readonly string ImageDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DownloadedImages");
         private readonly string GameDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DownloadedGames");
         private static string InstallationFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "installedGames.json");
@@ -96,7 +96,8 @@ namespace GameLauncher
                     if (mySqlReader != null)
                     {
                         int playTime = LoadPlaytime(mySqlReader.GetInt32("id"));
-                        var game = await ParseGameAsync(mySqlReader, playTime);
+                        double rating = CalculateRating(mySqlReader.GetInt32("id"));
+                        var game = await ParseGameAsync(mySqlReader, playTime, rating);
                         Games.Add(game);
                     }
                 }
@@ -132,7 +133,30 @@ namespace GameLauncher
             }
         }
 
-        private async Task<Game> ParseGameAsync(MySqlDataReader reader, int playTime)
+        private double CalculateRating(int gameId)
+        {
+            try
+            {
+                using (MySqlConnection connection = new MySqlConnection(ConnectionString))
+                {
+                    connection.Open();
+
+                    string query = @$"SELECT AVG(rating) FROM `reviews` WHERE game_id = {gameId};";
+                    using (MySqlCommand cmd = new MySqlCommand(query, connection))
+                    {
+                        var result = cmd.ExecuteScalar();
+                        return result != null ? Convert.ToDouble(result) : 0;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Database ERROR!"); ;
+                throw;
+            }
+        }
+
+        private async Task<Game> ParseGameAsync(MySqlDataReader reader, int playTime, double rating)
         {
             int id = reader.GetInt32("id");
             string name = reader.GetString("name");
@@ -145,7 +169,7 @@ namespace GameLauncher
             string developerName = reader.GetString("developer_name");
             string publisherName = reader.GetString("publisher_name");
 
-            return new Game(id, name, exeName, description, imageUrl, downloadLink, localImagePath, releaseDate, developerName, publisherName, playTime);
+            return new Game(id, name, exeName, description, imageUrl, downloadLink, localImagePath, releaseDate, developerName, publisherName, playTime, rating);
         }
 
         private void GamesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -162,6 +186,7 @@ namespace GameLauncher
                 ProgressBar.Value = 0;
                 GameDescription.Text = selectedGame.Description;
                 //Valahogy frissíteni kéne a playtime-ot a játék bezárása után
+                lblRating.Content = $"{selectedGame.Rating}/10";
                 lblPlaytime.Content = $"Playtime: {selectedGame.PlayTime} minutes";
                 GameImage.Source = new BitmapImage(new Uri(selectedGame.LocalImagePath));
             }
@@ -196,7 +221,7 @@ namespace GameLauncher
             if (GamesList.SelectedItem is Game selectedGame)
             {
                 Executables = LoadGameExecutables();
-                var gameInfo = Executables.FirstOrDefault(g => g.GameId == selectedGame.Id);
+                var gameInfo = Executables.FirstOrDefault(g => g.Id == selectedGame.Id);
 
                 if (gameInfo != null && File.Exists(gameInfo.ExecutablePath))
                 {
@@ -285,7 +310,7 @@ namespace GameLauncher
         {
             if (GamesList.SelectedItem is not Game selectedGame) return;
 
-            if (Executables.Where(x => x.GameId == selectedGame.Id).Count() != 0)
+            if (Executables.Where(x => x.Id == selectedGame.Id).Count() != 0)
             {
                 MessageBox.Show("This Game is already installed!");
                 return;
@@ -303,12 +328,7 @@ namespace GameLauncher
                 selectedGame.InstallPath = installPath;
 
                 string executablePath = Path.Combine(installPath, selectedGame.ExeName);
-                var gameInfo = new GameInstallationInfo
-                {
-                    GameId = selectedGame.Id,
-                    ExeName = selectedGame.ExeName,
-                    ExecutablePath = executablePath
-                };
+                var gameInfo = new Game(selectedGame.Id, selectedGame.ExeName, executablePath);
 
                 var gameInstallations = LoadGameExecutables();
                 gameInstallations.Add(gameInfo);
@@ -392,11 +412,18 @@ namespace GameLauncher
                 Directory.CreateDirectory(directoryPath);
         }
 
-        private void SaveGameExecutables(List<GameInstallationInfo> games)
+        private void SaveGameExecutables(List<Game> games)
         {
             try
             {
-                var json = JsonSerializer.Serialize(games);
+                var simplifiedGames = games.Select(game => new
+                {
+                    game.Id,
+                    game.ExeName,
+                    game.ExecutablePath
+                }).ToList();
+
+                var json = JsonSerializer.Serialize(simplifiedGames);
                 File.WriteAllText(InstallationFilePath, json);
             }
             catch (Exception ex)
@@ -405,21 +432,21 @@ namespace GameLauncher
             }
         }
 
-        private List<GameInstallationInfo> LoadGameExecutables()
+        private List<Game> LoadGameExecutables()
         {
             try
             {
                 if (File.Exists(InstallationFilePath))
                 {
                     var json = File.ReadAllText(InstallationFilePath);
-                    return JsonSerializer.Deserialize<List<GameInstallationInfo>>(json) ?? new List<GameInstallationInfo>();
+                    return JsonSerializer.Deserialize<List<Game>>(json) ?? new List<Game>();
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error loading game data: {ex.Message}");
             }
-            return new List<GameInstallationInfo>();
+            return new List<Game>();
         }
 
         private void UninstallButton_Click(object sender, RoutedEventArgs e)
@@ -430,7 +457,7 @@ namespace GameLauncher
 
                 var gameInstallations = LoadGameExecutables();
 
-                var gameInfo = gameInstallations.FirstOrDefault(g => g.GameId == selectedGame.Id);
+                var gameInfo = gameInstallations.FirstOrDefault(g => g.Id == selectedGame.Id);
 
                 if (gameInfo != null)
                 {
