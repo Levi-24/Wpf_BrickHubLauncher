@@ -120,7 +120,8 @@ namespace GameLauncher
                                     WHERE users.id = {userId} AND game_id = {gameId};";
                     using (MySqlCommand cmd = new MySqlCommand(query, connection))
                     {
-                        return (int)cmd.ExecuteScalar();
+                        var result = cmd.ExecuteScalar();
+                        return result != null ? Convert.ToInt32(result) : 0;
                     }
                 }
             }
@@ -135,7 +136,7 @@ namespace GameLauncher
         {
             int id = reader.GetInt32("id");
             string name = reader.GetString("name");
-            string exeName = reader.GetString("exe_name");
+            string exeName = reader.GetString("exe_name") + ".exe";
             string description = reader.GetString("description");
             string imageUrl = reader["image_path"] != DBNull.Value ? reader.GetString("image_path") : "https://i.postimg.cc/mDvhPW7C/NoImage.jpg";
             string downloadLink = reader["download_link"] != DBNull.Value ? reader.GetString("download_link") : null;
