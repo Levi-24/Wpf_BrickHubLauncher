@@ -20,13 +20,13 @@
                 <DataTemplate>
                     <Border BorderThickness="2" BorderBrush="Black" MaxWidth="300" Margin="5" Padding="10">
                         <StackPanel>
-                            <!-- Username and Rating -->
+                            <!-- Name and Rating -->
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="{Binding UserName}" FontSize="20" FontWeight="Bold"/>
+                                <TextBlock Text="{Binding Name}" FontSize="20" FontWeight="Bold"/>
                                 <TextBlock Text="{Binding Rating}" FontSize="20" FontWeight="Bold" Grid.Column="1"/>
                             </Grid>
 

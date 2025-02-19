@@ -67,10 +67,10 @@ namespace GameLauncher
                             while (reader.Read())
                             {
                                 int reviewUserId = reader.GetInt32("user_id");
-                                string reviewUserName = getUserName(reviewUserId);
+                                string reviewName = getName(reviewUserId);
 
                                 reviews.Add(new ReviewClass(
-                                    reviewUserName,
+                                    reviewName,
                                     reader.GetInt32("rating"),
                                     reader.GetString("review_title"),
                                     reader.GetString("review_text")
@@ -89,14 +89,14 @@ namespace GameLauncher
             }
         }
 
-        private string getUserName(int reviewUserId)
+        private string getName(int reviewUserId)
         {
             try
             {
                 using (MySqlConnection connection = new MySqlConnection(ConnectionString))
                 {
                     connection.Open();
-                    string query = $"SELECT username FROM users WHERE id = '{reviewUserId}';";
+                    string query = $"SELECT name FROM users WHERE id = '{reviewUserId}';";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, connection))
                     {

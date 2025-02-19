@@ -2,14 +2,14 @@
 {
     public class ReviewClass
     {
-        public string UserName { get; set; }
+        public string Name { get; set; }
         public int Rating { get; set; }
         public string ReviewTitle { get; set; }
         public string ReviewText { get; set; }
 
-        public ReviewClass(string userName, int rating, string reviewTitle, string reviewText)
+        public ReviewClass(string name, int rating, string reviewTitle, string reviewText)
         {
-            UserName = userName;
+            Name = name;
             Rating = rating;
             ReviewTitle = reviewTitle;
             ReviewText = reviewText;

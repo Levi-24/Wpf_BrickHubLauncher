@@ -30,11 +30,11 @@ namespace GameLauncher
                     string fullSettings = reader.ReadToEnd();
                     string[] pieces = fullSettings.Split(';');
 
-                    string savedUsername = pieces[0];
+                    string savedName = pieces[0];
                     string savedHash = pieces[1];
                     string savedSalt = pieces[2];
 
-                    (string storedHash, string storedSalt) = GetStoredPasswordHashAndSalt(DBConnectionString, savedUsername);
+                    (string storedHash, string storedSalt) = GetStoredPasswordHashAndSalt(DBConnectionString, savedName);
                     if (storedHash == savedHash && storedSalt == savedSalt)
                     {
                         MainWindow mainWindow = new MainWindow();
@@ -79,10 +79,10 @@ namespace GameLauncher
         #region LogIn
         private void Login_Click(object sender, RoutedEventArgs e)
         {
-            string username = txtUsername.Text;
+            string name = txtName.Text;
             string enteredPassword = txtPassword.Password;
 
-            (string storedHash, string storedSalt) = GetStoredPasswordHashAndSalt(DBConnectionString, username);
+            (string storedHash, string storedSalt) = GetStoredPasswordHashAndSalt(DBConnectionString, name);
 
             bool isPasswordValid = VerifyPassword(enteredPassword, storedHash, storedSalt);
 
@@ -91,7 +91,7 @@ namespace GameLauncher
                 if (chkRemember.IsChecked == true)
                 {
                     using StreamWriter writer = new StreamWriter(SettingsFile);
-                    writer.Write(username + ";");
+                    writer.Write(name + ";");
                     writer.Write(storedHash + ";");
                     writer.Write(storedSalt + ";");
                 }
@@ -110,7 +110,7 @@ namespace GameLauncher
             }
         }
 
-        static (string storedHash, string storedSalt) GetStoredPasswordHashAndSalt(string connectionString, string username)
+        static (string storedHash, string storedSalt) GetStoredPasswordHashAndSalt(string connectionString, string name)
         {
             string storedHash = string.Empty;
             string storedSalt = string.Empty;
@@ -119,10 +119,10 @@ namespace GameLauncher
             {
                 conn.Open();
 
-                string query = "SELECT password_hash, salt FROM users WHERE username = @username";
+                string query = "SELECT password_hash, salt FROM users WHERE name = @name";
                 using (MySqlCommand cmd = new MySqlCommand(query, conn))
                 {
-                    cmd.Parameters.AddWithValue("@username", username);
+                    cmd.Parameters.AddWithValue("@name", name);
                     using (MySqlDataReader reader = cmd.ExecuteReader())
                     {
                         if (reader.Read())
@@ -170,19 +170,19 @@ namespace GameLauncher
         #region Register
         private void Register_Click(object sender, RoutedEventArgs e)
         {
-            string username = txtUsername.Text;
+            string name = txtName.Text;
             string email = txtEmail.Text;
             string password = txtPassword.Password.ToString();
             string passwordAgain = txtPassAgain.Password.ToString();
 
-            if (!string.IsNullOrEmpty(password) && !string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(email))
+            if (!string.IsNullOrEmpty(password) && !string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(email))
             {
                 if (password == passwordAgain)
                 {
                     if (EmailValidator(email))
                     {
                         (string hashedPassword, string salt) = HashPassword(password);
-                        RegisterUserInDatabase(DBConnectionString, username, email, hashedPassword, salt);
+                        RegisterUserInDatabase(DBConnectionString, name, email, hashedPassword, salt);
 
                         txtPassword.Password = string.Empty;
                         regBtn.IsEnabled = false;
@@ -205,7 +205,7 @@ namespace GameLauncher
             }
             else
             {
-                MessageBox.Show("The username, password and E-mail fields can not be empty!", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("The name, password and E-mail fields can not be empty!", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -251,31 +251,31 @@ namespace GameLauncher
             return salt;
         }
 
-        static void RegisterUserInDatabase(string connectionString, string username, string email, string passwordHash, string salt)
+        static void RegisterUserInDatabase(string connectionString, string name, string email, string passwordHash, string salt)
         {
-            List<string> usernames = new List<string>();
+            List<string> emails = new List<string>();
 
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 conn.Open();
 
-                string query = "SELECT username FROM users WHERE username = @username";
+                string query = "SELECT email FROM users WHERE email = @email";
                 using (MySqlCommand cmd = new MySqlCommand(query, conn))
                 {
-                    cmd.Parameters.AddWithValue("@username", username);
+                    cmd.Parameters.AddWithValue("@email", email);
                     using (MySqlDataReader reader = cmd.ExecuteReader())
                     {
                         if (reader.Read())
                         {
-                            usernames.Add(reader["username"].ToString());
+                            emails.Add(reader["email"].ToString());
                         }
                     }
                 }
             }
 
-            if (usernames.Contains(username))
+            if (emails.Contains(email))
             {
-                MessageBox.Show("This username is already taken!", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("This E-mail is already taken!", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             else
             {
@@ -283,10 +283,10 @@ namespace GameLauncher
                 {
                     conn.Open();
 
-                    string query = "INSERT INTO users (username, email, password_hash, salt) VALUES (@username, @email, @password_hash, @salt)";
+                    string query = "INSERT INTO users (name, email, password_hash, salt) VALUES (@name, @email, @password_hash, @salt)";
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@username", username);
+                        cmd.Parameters.AddWithValue("@name", name);
                         cmd.Parameters.AddWithValue("@email", email);
                         cmd.Parameters.AddWithValue("@password_hash", passwordHash);
                         cmd.Parameters.AddWithValue("@salt", salt);

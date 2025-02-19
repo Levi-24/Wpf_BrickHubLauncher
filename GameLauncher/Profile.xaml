@@ -7,8 +7,7 @@
         mc:Ignorable="d"
         Title="Profile" Height="250" Width="200">
     <Grid>
-        <Label x:Name="lblName" Content="Label" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="lblUsername" Content="Label" HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="lblName" Content="Label" HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top"/>
         <Label x:Name="lblEmail" Content="Label" HorizontalAlignment="Left" Margin="10,72,0,0" VerticalAlignment="Top"/>
         <Label x:Name="lblRegisterDate" Content="Label" HorizontalAlignment="Left" Margin="10,103,0,0" VerticalAlignment="Top"/>
         <Label x:Name="lblCombinedPlaytime" Content="Label" HorizontalAlignment="Left" Margin="10,134,0,0" VerticalAlignment="Top"/>

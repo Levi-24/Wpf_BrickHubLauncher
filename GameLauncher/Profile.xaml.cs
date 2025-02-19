@@ -32,12 +32,10 @@ namespace GameLauncher
                     if (mySqlReader != null)
                     {
                         string name = reader.GetString("name");
-                        string userName = reader.GetString("username");
                         string email = reader.GetString("email");
                         DateTime registerDate = reader.GetDateTime("created_at");
 
                         lblName.Content = name;
-                        lblUsername.Content = userName;
                         lblEmail.Content = email;
                         lblRegisterDate.Content = registerDate;
                     }
@@ -48,24 +46,32 @@ namespace GameLauncher
                 MessageBox.Show($"Database error: {ex.Message}");
             }
         }
-
         public async void LoadCombinedPlayTime(int userId)
         {
             try
             {
-                var query = @$"SELECT SUM(playtime_minutes) AS combined_minutes FROM playtime WHERE user_id LIKE '{userId}';";
+                var query = @$"SELECT SUM(playtime_minutes) AS combined_minutes FROM playtime WHERE user_id = {userId};";
                 using var conn = new MySqlConnection(ConnectionString);
                 await conn.OpenAsync();
 
                 using var cmd = new MySqlCommand(query, conn);
                 using var reader = await cmd.ExecuteReaderAsync();
 
-                while (await reader.ReadAsync())
+                if (await reader.ReadAsync())
                 {
                     var mySqlReader = reader as MySqlDataReader;
                     if (mySqlReader != null)
                     {
-                        int combinedMinutes = reader.GetInt32("combined_minutes");
+                        // Handle NULL value from SUM()
+                        int combinedMinutes = reader.IsDBNull(reader.GetOrdinal("combined_minutes")) ? 0 : reader.GetInt32("combined_minutes");
+
+                        // Display appropriate message
+                        if (combinedMinutes == 0)
+                        {
+                            lblCombinedPlaytime.Content = "No playtime recorded";
+                            return;
+                        }
+
                         lblCombinedPlaytime.Content = $"{combinedMinutes / 60} hours {combinedMinutes % 60} minutes";
                     }
                 }
@@ -75,5 +81,6 @@ namespace GameLauncher
                 MessageBox.Show($"Database error: {ex.Message}");
             }
         }
+
     }
 }

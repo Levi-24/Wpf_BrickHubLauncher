@@ -22,8 +22,8 @@
         </Grid.RowDefinitions>
 
         <!-- Username -->
-        <Label x:Name="lblUsername" Content="Username" FontSize="24" VerticalAlignment="Center" />
-        <TextBox Name="txtUsername" FontSize="24" Grid.Column="1" Grid.ColumnSpan="2" Margin="10,0,0,0" VerticalAlignment="Center" />
+        <Label x:Name="lblName" Content="Username" FontSize="24" VerticalAlignment="Center" />
+        <TextBox Name="txtName" FontSize="24" Grid.Column="1" Grid.ColumnSpan="2" Margin="10,0,0,0" VerticalAlignment="Center" />
 
         <!-- Password -->
         <Label x:Name="lblPassword" Content="Password" FontSize="24" Grid.Row="1" VerticalAlignment="Center" />

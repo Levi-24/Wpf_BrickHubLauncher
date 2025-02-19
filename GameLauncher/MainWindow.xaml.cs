@@ -9,6 +9,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using MySql.Data.MySqlClient;
+using MySqlX.XDevAPI.Common;
 
 namespace GameLauncher
 {
@@ -46,8 +47,8 @@ namespace GameLauncher
                     string fullSettings = reader.ReadToEnd();
                     string[] pieces = fullSettings.Split(';');
 
-                    string savedUsername = pieces[0];
-                    string query = $"SELECT id FROM users WHERE username = '{savedUsername}';";
+                    string savedName = pieces[0];
+                    string query = $"SELECT id FROM users WHERE name = '{savedName}';";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, connection))
                     {
@@ -128,7 +129,7 @@ namespace GameLauncher
             }
             catch (Exception)
             {
-                MessageBox.Show("Database ERROR!");;
+                MessageBox.Show("Playtime ERROR!");;
                 throw;
             }
         }
@@ -141,17 +142,23 @@ namespace GameLauncher
                 {
                     connection.Open();
 
-                    string query = @$"SELECT AVG(rating) FROM `reviews` WHERE game_id = {gameId};";
+                    string query = @$"SELECT AVG(rating) FROM reviews WHERE game_id = {gameId};";
                     using (MySqlCommand cmd = new MySqlCommand(query, connection))
                     {
                         var result = cmd.ExecuteScalar();
-                        return result != null ? Convert.ToDouble(result) : 0;
+
+                        if (result == null || result == DBNull.Value)
+                        {
+                            return 0.0;
+                        }
+
+                        return Convert.ToDouble(result);
                     }
                 }
             }
             catch (Exception)
             {
-                MessageBox.Show("Database ERROR!"); ;
+                MessageBox.Show("Rating ERROR!"); ;
                 throw;
             }
         }
