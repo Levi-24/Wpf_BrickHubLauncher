@@ -25,6 +25,20 @@ namespace GameLauncher
         private readonly int userId;
         private DateTime gameStartTime;
         private int totalPlaytimeMinutes;
+        private Game _selectedGame;
+        private Game SelectedGame
+        {
+            get => _selectedGame;
+            set
+            {
+                if (_selectedGame != value)
+                {
+                    _selectedGame = value;
+                    // Here you can trigger any updates related to the selected game
+                    UpdateUIForSelectedGame();
+                }
+            }
+        }
 
         public MainWindow()
         {
@@ -35,6 +49,16 @@ namespace GameLauncher
             Executables = LoadGameExecutables();
             GamesList.ItemsSource = Games;
         }
+
+        private void GameItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.DataContext is Game selectedGame)
+            {
+                // Set the selected game, which will trigger the UI update
+                SelectedGame = selectedGame;
+            }
+        }
+
 
         private int GetUserId()
         {
@@ -179,25 +203,26 @@ namespace GameLauncher
             return new Game(id, name, exeName, description, imageUrl, downloadLink, localImagePath, releaseDate, developerName, publisherName, playTime, rating);
         }
 
-        private void GamesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void UpdateUIForSelectedGame()
         {
-            if (GamesList.SelectedItem is Game selectedGame)
+            if (SelectedGame != null)
             {
-                DownloadButton.IsEnabled = !string.IsNullOrEmpty(selectedGame.DownloadLink);
-                lblReleaseDate.Content = selectedGame.ReleaseDate.ToString("yyyy MMMM dd.");
-                lblDev.Content = selectedGame.DeveloperName;
-                lblPublisher.Content = selectedGame.PublisherName;
+                spGameData.Visibility = Visibility.Visible;
+                DownloadButton.IsEnabled = !string.IsNullOrEmpty(SelectedGame.DownloadLink);
+                tbReleaseDate.Text = SelectedGame.ReleaseDate.ToString("yyyy MMMM dd.");
+                tbDeveloper.Text = SelectedGame.DeveloperName;
+                tbPublisher.Text = SelectedGame.PublisherName;
                 DownloadButton.Visibility = Visibility.Visible;
                 LaunchButton.Visibility = Visibility.Visible;
                 ProgressBar.Visibility = Visibility.Visible;
                 ProgressBar.Value = 0;
-                GameDescription.Text = selectedGame.Description;
-                //Valahogy frissíteni kéne a playtime-ot a játék bezárása után
-                lblRating.Content = $"{selectedGame.Rating}/10";
-                lblPlaytime.Content = $"Playtime: {selectedGame.PlayTime} minutes";
-                GameImage.Source = new BitmapImage(new Uri(selectedGame.LocalImagePath));
+                GameDescription.Text = SelectedGame.Description;
+                tbRating.Text = $"{SelectedGame.Rating}/10";
+                tbPlaytime.Text = $"Playtime: {SelectedGame.PlayTime} minutes";
+                GameImage.Source = new BitmapImage(new Uri(SelectedGame.LocalImagePath));
             }
         }
+
 
         private async Task<string> DownloadImageAsync(string url)
         {
@@ -225,10 +250,10 @@ namespace GameLauncher
 
         private void LaunchButton_Click(object sender, RoutedEventArgs e)
         {
-            if (GamesList.SelectedItem is Game selectedGame)
+            if (SelectedGame != null)
             {
                 Executables = LoadGameExecutables();
-                var gameInfo = Executables.FirstOrDefault(g => g.Id == selectedGame.Id);
+                var gameInfo = Executables.FirstOrDefault(g => g.Id == SelectedGame.Id);
 
                 if (gameInfo != null && File.Exists(gameInfo.ExecutablePath))
                 {
@@ -246,7 +271,7 @@ namespace GameLauncher
 
                         gameStartTime = DateTime.Now;
 
-                        gameProcess.Exited += (s, args) => OnGameExit(selectedGame.Name, selectedGame.Id);
+                        gameProcess.Exited += (s, args) => OnGameExit(SelectedGame.Name, SelectedGame.Id);
                         gameProcess.Start();
                     }
                     catch (Exception ex)
@@ -260,6 +285,7 @@ namespace GameLauncher
                 }
             }
         }
+
 
         private void OnGameExit(string gameName, int gameID)
         {
@@ -315,27 +341,27 @@ namespace GameLauncher
 
         private async void DownloadButton_Click(object sender, RoutedEventArgs e)
         {
-            if (GamesList.SelectedItem is not Game selectedGame) return;
+            if (SelectedGame == null) return;
 
-            if (Executables.Where(x => x.Id == selectedGame.Id).Count() != 0)
+            if (Executables.Where(x => x.Id == SelectedGame.Id).Count() != 0)
             {
                 MessageBox.Show("This Game is already installed!");
                 return;
             }
 
             EnsureDirectoryExists(GameDirectory);
-            string targetPath = await SelectDownloadDirectoryAsync(selectedGame);
+            string targetPath = await SelectDownloadDirectoryAsync(SelectedGame);
             if (targetPath == null) return;
 
             string installPath = targetPath.Remove(targetPath.Length - 4);
 
             try
             {
-                await DownloadAndInstallGameAsync(selectedGame, targetPath, installPath);
-                selectedGame.InstallPath = installPath;
+                await DownloadAndInstallGameAsync(SelectedGame, targetPath, installPath);
+                SelectedGame.InstallPath = installPath;
 
-                string executablePath = Path.Combine(installPath, selectedGame.ExeName);
-                var gameInfo = new Game(selectedGame.Id, selectedGame.ExeName, executablePath);
+                string executablePath = Path.Combine(installPath, SelectedGame.ExeName);
+                var gameInfo = new Game(SelectedGame.Id, SelectedGame.ExeName, executablePath);
 
                 var gameInstallations = LoadGameExecutables();
                 gameInstallations.Add(gameInfo);
@@ -460,11 +486,11 @@ namespace GameLauncher
         {
             if (MessageBox.Show("Are you sure you want to uninstall this game?", "Confirm Uninstall", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
-                if (GamesList.SelectedItem is not Game selectedGame) return;
+                if (SelectedGame == null) return;
 
                 var gameInstallations = LoadGameExecutables();
 
-                var gameInfo = gameInstallations.FirstOrDefault(g => g.Id == selectedGame.Id);
+                var gameInfo = gameInstallations.FirstOrDefault(g => g.Id == SelectedGame.Id);
 
                 if (gameInfo != null)
                 {
@@ -497,17 +523,17 @@ namespace GameLauncher
             }
         }
 
-        private async void Button_Click(object sender, RoutedEventArgs e)
+        private async void ProfileButton_Click(object sender, RoutedEventArgs e)
         {
             Profile profileWindow = new Profile(userId);
             profileWindow.Show();
         }
 
-        private void Button_Click_1(object sender, RoutedEventArgs e)
+        private void ReviewButton_Click(object sender, RoutedEventArgs e)
         {
-            if (GamesList.SelectedItem is Game selectedGame)
+            if (SelectedGame != null)
             {
-                Review review = new Review(selectedGame.Id, userId);
+                Review review = new Review(SelectedGame.Id, userId);
                 review.Show();
             }
             else

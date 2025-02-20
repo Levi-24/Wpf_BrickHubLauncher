@@ -1,31 +1,90 @@
 ﻿<Window x:Class="GameLauncher.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Game Launcher" Height="450" Width="800">
-    <Grid>
-        <ListView x:Name="GamesList" HorizontalAlignment="Left" Width="300" SelectionChanged="GamesList_SelectionChanged" Margin="0,44,0,0">
-            <ListView.View>
-                <GridView>
-                    <GridViewColumn Header="Game Name" DisplayMemberBinding="{Binding Name}" />
-                </GridView>
-            </ListView.View>
-        </ListView>
+        Title="Game Launcher" Height="600" Width="1000" Background="#1E1E1E" ResizeMode="NoResize">
 
-        <Image x:Name="GameImage" Margin="315,9,225,215" />
-        <TextBlock x:Name="GameDescription" TextWrapping="Wrap" Margin="593,10,30,217" />
-        <Button Visibility="Hidden" x:Name="LaunchButton" Content="Launch Game" Click="LaunchButton_Click" Margin="506,234,118,155" />
-        <Button Content="Log Out" Click="LogOutButton_Click" Margin="700,234,10,155"/>
-        <Button Content="Uninstall" Click="UninstallButton_Click" Margin="510,364,200,25"/>
-        <Button x:Name="DownloadButton" Visibility="Hidden" Content="Download" Click="DownloadButton_Click" Margin="315,234,310,155"/>
-        <ProgressBar Visibility="Hidden" HorizontalAlignment="Left" x:Name="ProgressBar" Minimum="0" Maximum="100" Height="20" Margin="340,299,0,0" VerticalAlignment="Top" Width="430"/>
-        <Label x:Name="lblReleaseDate" HorizontalAlignment="Left" Margin="644,361,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="lblDev" HorizontalAlignment="Left" Margin="391,316,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="lblPublisher" HorizontalAlignment="Left" Margin="386,348,0,0" VerticalAlignment="Top"/>
-        <Label Content="Developer:" HorizontalAlignment="Left" Margin="320,316,0,0" VerticalAlignment="Top"/>
-        <Label Content="Publisher:" HorizontalAlignment="Left" Margin="320,348,0,0" VerticalAlignment="Top"/>
-        <Button Content="Profile" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Height="29" Width="70" Click="Button_Click"/>
-        <Button Content="Review" HorizontalAlignment="Left" Margin="95,10,0,0" VerticalAlignment="Top" Height="29" Width="80" Click="Button_Click_1"/>
-        <Label x:Name="lblPlaytime" Content="0 Perc" HorizontalAlignment="Left" Margin="320,379,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="lblRating" Content="" HorizontalAlignment="Left" Margin="682,324,0,0" VerticalAlignment="Top"/>
+    <Grid>
+        <!-- Define Column Layout -->
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250"/>
+            <!-- Sidebar -->
+            <ColumnDefinition Width="*"/>
+            <!-- Main Content -->
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar Navigation -->
+        <StackPanel Grid.Column="0" Background="#252525" Margin="0">
+            <TextBlock Text="Game Launcher" Foreground="White" FontSize="18" FontWeight="Bold" Margin="10"/>
+            <Button Content="Profile" Click="ProfileButton_Click" Margin="10,5" Padding="10" Background="#333" Foreground="White"/>
+            <Button Content="Review" Click="ReviewButton_Click" Margin="10,5" Padding="10" Background="#333" Foreground="White"/>
+            <Button Content="Log Out" Click="LogOutButton_Click" Margin="10,5" Padding="10" Background="#FF3333" Foreground="White"/>
+            
+            <!-- Games List as an ItemsControl -->
+            <ItemsControl x:Name="GamesList" Margin="10,5" Background="#2A2A2A" MinHeight="350" >
+                <ItemsControl.ItemsSource>
+                    <Binding Path="Games" />
+                </ItemsControl.ItemsSource>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Content="{Binding Name}" Click="GameItem_Click" Background="Transparent" BorderBrush="Transparent">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="#333" Padding="10">
+                                        <TextBlock Text="{Binding Name}" Foreground="White"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+        </StackPanel>
+
+        <!-- Main Content Area -->
+        <Grid Grid.Column="1" Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Game Details -->
+            <Grid Grid.Row="1" Margin="0,10,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="300"/>
+                    <!-- Game Image -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- Game Info -->
+                </Grid.ColumnDefinitions>
+
+                <Image x:Name="GameImage" Width="250" Height="300" Stretch="Uniform" Grid.Column="0" Margin="10"/>
+
+                <StackPanel x:Name="spGameData" Visibility="Hidden" Grid.Column="1" Margin="10" VerticalAlignment="Center">
+                    <TextBlock x:Name="GameDescription" TextWrapping="Wrap" Foreground="White" FontSize="14" Margin="5"/>
+                    <TextBlock Text="Release Date:" Foreground="Gray" Margin="5"/>
+                    <TextBlock x:Name="tbReleaseDate" Foreground="White" Margin="5"/>
+                    <TextBlock Text="Developer:" Foreground="Gray" Margin="5"/>
+                    <TextBlock x:Name="tbDeveloper" Foreground="White" Margin="5"/>
+                    <TextBlock Text="Publisher:" Foreground="Gray" Margin="5"/>
+                    <TextBlock x:Name="tbPublisher" Foreground="White" Margin="5"/>
+                    <TextBlock Text="Playtime:" Foreground="Gray" Margin="5"/>
+                    <TextBlock x:Name="tbPlaytime" Foreground="White" Margin="5"/>
+                    <TextBlock Text="Rating:" Foreground="Gray" Margin="5"/>
+                    <TextBlock x:Name="tbRating" Foreground="White" Margin="5"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Action Buttons -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+                <Button x:Name="LaunchButton" Content="Launch" Click="LaunchButton_Click" Margin="5" Padding="10" Background="#3A8DFF" Foreground="White"/>
+                <Button Content="Uninstall" Click="UninstallButton_Click" Margin="5" Padding="10" Background="#FF5733" Foreground="White"/>
+                <Button x:Name="DownloadButton" Content="Download" Click="DownloadButton_Click" Margin="5" Padding="10" Background="#33C63A" Foreground="White"/>
+            </StackPanel>
+
+            <!-- Progress Bar -->
+            <ProgressBar x:Name="ProgressBar" Minimum="0" Maximum="100" Grid.Row="3" Height="10" Visibility="Hidden" Background="#444" Margin="10"/>
+        </Grid>
     </Grid>
 </Window>
