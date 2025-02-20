@@ -9,7 +9,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using MySql.Data.MySqlClient;
-using MySqlX.XDevAPI.Common;
 
 namespace GameLauncher
 {
@@ -222,7 +221,6 @@ namespace GameLauncher
                 GameImage.Source = new BitmapImage(new Uri(SelectedGame.LocalImagePath));
             }
         }
-
 
         private async Task<string> DownloadImageAsync(string url)
         {
