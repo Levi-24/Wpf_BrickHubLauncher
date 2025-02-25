@@ -8,7 +8,9 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using Google.Protobuf.WellKnownTypes;
 using MySql.Data.MySqlClient;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace GameLauncher
 {
@@ -217,6 +219,14 @@ namespace GameLauncher
                 tbRating.Text = $"{SelectedGame.Rating}/10";
                 tbPlaytime.Text = $"Playtime: {SelectedGame.PlayTime} minutes";
                 GameImage.Source = new BitmapImage(new Uri(SelectedGame.LocalImagePath));
+                lblGameName.Content = SelectedGame.Name;
+                var loadedReviews = loadReviews(SelectedGame.Id);
+                Reviews.Clear();
+                foreach (var review in loadedReviews)
+                {
+                    Reviews.Add(review);
+                }
+                lbxReviews.ItemsSource = Reviews;
             }
         }
 
@@ -524,7 +534,7 @@ namespace GameLauncher
             profileWindow.Show();
         }
 
-        private void ButtonChange_Click(object sender, RoutedEventArgs e)
+        private void ReadWriteReviewButton_Click(object sender, RoutedEventArgs e)
         {
             lbxReviews.Visibility = lbxReviews.Visibility.Equals(Visibility.Visible) ? Visibility.Hidden : Visibility.Visible;
             txbContent.Visibility = txbContent.Visibility.Equals(Visibility.Visible) ? Visibility.Hidden : Visibility.Visible;
@@ -643,7 +653,21 @@ namespace GameLauncher
 
         private void ChangeLibraryVisibility(object sender, RoutedEventArgs e)
         {
+            ChangeReviewVisibility(sender, e);
             LibraryGrid.Visibility = LibraryGrid.Visibility.Equals(Visibility.Visible) ? Visibility.Hidden : Visibility.Visible;
+        }
+
+        private void ChangeReviewVisibility(object sender, RoutedEventArgs e)
+        {
+            txbContent.Visibility = txbContent.Visibility.Equals(Visibility.Visible) ? Visibility.Hidden : Visibility.Visible;
+            sldrRating.Visibility = sldrRating.Visibility.Equals(Visibility.Visible) ? Visibility.Hidden : Visibility.Visible;
+            lblRating.Visibility = lblRating.Visibility.Equals(Visibility.Visible) ? Visibility.Hidden : Visibility.Visible;
+            txbTitle.Visibility = txbTitle.Visibility.Equals(Visibility.Visible) ? Visibility.Hidden : Visibility.Visible;
+            lblRatingText.Visibility = lblRatingText.Visibility.Equals(Visibility.Visible) ? Visibility.Hidden : Visibility.Visible;
+            btnSubmit.Visibility = btnSubmit.Visibility.Equals(Visibility.Visible) ? Visibility.Hidden : Visibility.Visible;
+            lbxReviews.Visibility = lbxReviews.Visibility.Equals(Visibility.Visible) ? Visibility.Hidden : Visibility.Visible;
+            btnChange.Visibility = btnChange.Visibility.Equals(Visibility.Visible) ? Visibility.Hidden : Visibility.Visible;
+            lblGameName.Visibility = lblGameName.Visibility.Equals(Visibility.Visible) ? Visibility.Hidden : Visibility.Visible;
         }
 
         private void ReviewButton_Click(object sender, RoutedEventArgs e)
@@ -653,12 +677,9 @@ namespace GameLauncher
                     Reviews.Clear();
                     var currentGameId = SelectedGame.Id;
                     var currentUserId = userId;
-                    lblGameName.Visibility = Visibility.Visible;
-                    lbxReviews.Visibility = Visibility.Visible;
-                    btnChange.Visibility = Visibility.Visible;
-                    LibraryGrid.Visibility = Visibility.Hidden;
+                ChangeLibraryVisibility(sender, e);
 
-                    InitializeComponent();
+                InitializeComponent();
 
                     this.DataContext = this;
 
