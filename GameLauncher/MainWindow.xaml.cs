@@ -7,6 +7,8 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using MySql.Data.MySqlClient;
 
@@ -25,6 +27,7 @@ namespace GameLauncher
         private readonly int userId;
         private DateTime gameStartTime;
         private int totalPlaytimeMinutes;
+        private Button _selectedButton;
         private Game _selectedGame;
         private Game SelectedGame
         {
@@ -54,6 +57,23 @@ namespace GameLauncher
             if (sender is Button button && button.DataContext is Game selectedGame)
             {
                 SelectedGame = selectedGame;
+            }
+            if (_selectedButton != null)
+            {
+                _selectedButton.ClearValue(Button.BackgroundProperty);
+                _selectedButton.ClearValue(Button.ForegroundProperty);
+                _selectedButton.ClearValue(Button.BorderThicknessProperty);
+                _selectedButton.ClearValue(Button.FontWeightProperty);
+            }
+
+            Button clickedButton = sender as Button;
+            if (clickedButton != null)
+            {
+                clickedButton.Background = new SolidColorBrush(Colors.LightSlateGray); // Highlight clicked button
+                clickedButton.Foreground = new SolidColorBrush(Colors.Black);
+                clickedButton.BorderThickness = new Thickness(3);
+                clickedButton.FontWeight = FontWeights.Bold;
+                _selectedButton = clickedButton;
             }
         }
 
@@ -101,11 +121,11 @@ namespace GameLauncher
             try
             {
                 var query = @"SELECT g.*, 
-                              dev.name AS developer_name, 
-                              pub.name AS publisher_name
-                            FROM games g
-                              JOIN members dev ON g.developer_id = dev.id
-                              JOIN members pub ON g.publisher_id = pub.id";
+                      dev.name AS developer_name, 
+                      pub.name AS publisher_name
+                    FROM games g
+                      JOIN members dev ON g.developer_id = dev.id
+                      JOIN members pub ON g.publisher_id = pub.id";
                 using var conn = new MySqlConnection(ConnectionString);
                 await conn.OpenAsync();
 
@@ -122,6 +142,12 @@ namespace GameLauncher
                         var game = await ParseGameAsync(mySqlReader, playTime, rating);
                         Games.Add(game);
                     }
+                }
+
+                // Set the default selected game to the first game in the list if available
+                if (Games.Count > 0)
+                {
+                    SelectedGame = Games[0]; // Set the first game as the selected game
                 }
             }
             catch (Exception ex)
@@ -534,13 +560,7 @@ namespace GameLauncher
 
         private void ReadWriteReviewButton_Click(object sender, RoutedEventArgs e)
         {
-            lbxReviews.Visibility = lbxReviews.Visibility.Equals(Visibility.Visible) ? Visibility.Hidden : Visibility.Visible;
-            txbContent.Visibility = txbContent.Visibility.Equals(Visibility.Visible) ? Visibility.Hidden : Visibility.Visible;
-            txbTitle.Visibility = txbTitle.Visibility.Equals(Visibility.Visible) ? Visibility.Hidden : Visibility.Visible;
-            sldrRating.Visibility = sldrRating.Visibility.Equals(Visibility.Visible) ? Visibility.Hidden : Visibility.Visible;
-            lblRating.Visibility = lblRating.Visibility.Equals(Visibility.Visible) ? Visibility.Hidden : Visibility.Visible;
-            btnSubmit.Visibility = btnSubmit.Visibility.Equals(Visibility.Visible) ? Visibility.Hidden : Visibility.Visible;
-            lblRatingText.Visibility = lblRatingText.Visibility.Equals(Visibility.Visible) ? Visibility.Hidden : Visibility.Visible;
+            lbxReviews.Visibility = lbxReviews.Visibility == Visibility.Visible ? Visibility.Hidden : Visibility.Visible;
             btnChange.Content = btnChange.Content.Equals("Add Review") ? "Show Reviews" : "Add Review";
         }
 
@@ -568,6 +588,8 @@ namespace GameLauncher
                     }
                 }
 
+                ReviewButton_Click(sender, e);
+                lbxReviews.Visibility = Visibility.Visible;
                 MessageBox.Show("Review submitted successfully");
 
             }
@@ -575,6 +597,11 @@ namespace GameLauncher
             {
                 MessageBox.Show($"Database error: {ex.Message}");
             }
+
+            txbContent.Text = "Content";
+            txbTitle.Text = "Title";
+            sldrRating.Value = 1;
+            lblRating.Content = "1";
         }
 
         private void sldrRating_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -656,8 +683,15 @@ namespace GameLauncher
 
         private void LibraryVisibilityOn(object sender, RoutedEventArgs e)
         {
-            LibraryGrid.Visibility = Visibility.Visible;
-            ReviewVisibilityOff(sender, e);
+            if (SelectedGame == null)
+            {
+                MessageBox.Show("Please Select a Game");
+            }
+            else
+            {
+                LibraryGrid.Visibility = Visibility.Visible;
+                ReviewVisibilityOff(sender, e);
+            }
         }
 
         private void ReviewVisibilityOff(object sender, RoutedEventArgs e)

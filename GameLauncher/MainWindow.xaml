@@ -30,14 +30,16 @@
                         <Button Content="{Binding Name}" Click="GamesListItem_Click">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}" BorderThickness="0" Padding="10">
-                                        <TextBlock Text="{Binding Name}" Foreground="White"/>
+                                    <Border Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" Padding="10">
+                                        <TextBlock Text="{Binding Name}"  Foreground="{TemplateBinding Foreground}" FontWeight="{TemplateBinding FontWeight}"/>
                                     </Border>
                                 </ControlTemplate>
                             </Button.Template>
                             <Button.Style>
                                 <Style TargetType="Button">
                                     <Setter Property="Background" Value="#333" />
+                                    <Setter Property="Foreground" Value="White" />
+                                    <Setter Property="FontWeight" Value="Normal" />
                                     <Setter Property="BorderThickness" Value="0" />
                                     <Style.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
@@ -53,7 +55,7 @@
         </StackPanel>
 
         <!-- Main Content Area -->
-        <Grid x:Name="LibraryGrid"  Grid.Column="1" Margin="10">
+        <Grid x:Name="LibraryGrid" Grid.Column="1" Margin="10">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
@@ -113,31 +115,47 @@
             <Label x:Name="lblRatingText" Content="Rating (1-10)" HorizontalAlignment="Left" Margin="25,0,0,100" VerticalAlignment="Center" Grid.Column="1" Foreground="White"/>
             <Button x:Name="btnSubmit" Content="Submit" HorizontalAlignment="Right" VerticalAlignment="Top" Height="50" Width="100" Click="btnSubmit_Click" Grid.Column="1" Margin="-7,100,25,0" Background="#FF333333" Foreground="White"/>
 
-            <ListBox x:Name="lbxReviews" ItemsSource="{Binding Reviews}" Background="#FF252525" Margin="25,100,25,25" Grid.Column="1" Foreground="White">
+            <ListBox x:Name="lbxReviews" ItemsSource="{Binding Reviews}" HorizontalContentAlignment="Stretch" Background="#FF252525" 
+         Margin="25,100,25,25" Grid.Column="1" Foreground="White" ScrollViewer.CanContentScroll="False"
+         AlternationCount="2">
+
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Background" Value="#333"/>
+                        <Style.Triggers>
+                            <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                <Setter Property="Background" Value="#444"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <Border BorderThickness="2" BorderBrush="Black" MaxWidth="300" Margin="5" Padding="10">
-                            <StackPanel Background="Aqua">
+                        <Border BorderThickness="2" BorderBrush="Black" Margin="5" Padding="10">
+                            <StackPanel>
                                 <!-- Name and Rating -->
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="auto" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="{Binding Name}" Foreground="BlueViolet" FontSize="20" FontWeight="Bold"/>
-                                    <TextBlock Text="{Binding Rating}" Foreground="BlueViolet" FontSize="20" FontWeight="Bold" Grid.Column="1"/>
+                                    <TextBlock Text="{Binding Name}" Foreground="WhiteSmoke" FontSize="20" FontWeight="Bold"/>
+                                    <TextBlock Text="{Binding Rating}" Foreground="WhiteSmoke" FontSize="20" FontWeight="Bold" Grid.Column="1"/>
                                 </Grid>
 
                                 <!-- Title -->
-                                <TextBlock Text="{Binding ReviewTitle}" Foreground="BlueViolet" FontSize="22" FontWeight="Bold" Margin="0,10,0,0"/>
+                                <TextBlock Text="{Binding ReviewTitle}" Foreground="WhiteSmoke" FontSize="22" FontWeight="Bold" Margin="0,10,0,0"/>
 
                                 <!-- Content -->
-                                <TextBlock Text="{Binding ReviewText}" Foreground="BlueViolet" FontSize="28" FontWeight="Bold" Margin="0,10,0,0"/>
+                                <TextBlock Text="{Binding ReviewText}" Foreground="White" FontSize="28" FontWeight="Bold" Margin="0,10,0,0"/>
                             </StackPanel>
                         </Border>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
+
+
             <Button x:Name="btnChange" Content="Add Review" HorizontalAlignment="Right" VerticalAlignment="Top" Width="100" Height="50" Click="ReadWriteReviewButton_Click" Grid.Column="1" Margin="0,25,25,0" Background="#FF333333" Foreground="White"/>
         </Grid>
     </Grid>
