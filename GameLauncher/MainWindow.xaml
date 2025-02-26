@@ -17,7 +17,7 @@
             <TextBlock Text="Game Launcher" Foreground="White" FontSize="18" FontWeight="Bold" Margin="10"/>
             <Button Content="Profile" Click="ProfileButton_Click" Margin="10,5" Padding="10" Background="#333" Foreground="White"/>
             <Button Content="Review" Click="ReviewButton_Click" Margin="10,5" Padding="10" Background="#333" Foreground="White"/>
-            <Button Content="Library" Click="ChangeLibraryVisibility" Padding="10" Margin="10,5" Background="#333" Foreground="White"/>
+            <Button Content="Library" Click="LibraryVisibilityOn" Padding="10" Margin="10,5" Background="#333" Foreground="White"/>
             <Button Content="Log Out" Click="LogOutButton_Click" Margin="10,5" Padding="10" Background="#FF3333" Foreground="White"/>
 
             <!-- Games List as an ItemsControl -->
@@ -104,39 +104,41 @@
 
 
         <!--REVIEW TYPE SHI-->
-        <TextBox x:Name="txbContent" TextWrapping="Wrap" Text="Content" FontSize="18" Grid.Column="1" VerticalAlignment="Bottom" Margin="25,-1,25,25" Height="300" Foreground="White" Background="#FF252525" Visibility="Hidden"/>
-        <Slider x:Name="sldrRating" TickFrequency="1" IsSnapToTickEnabled="True" Value="1" Maximum="10" Minimum="1" HorizontalAlignment="Left" VerticalAlignment="Center" Width="119" ValueChanged="sldrRating_ValueChanged" Grid.Column="1" Margin="125,0,0,100" Visibility="Hidden"/>
-        <Label x:Name="lblRating" Content="1" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Foreground="White" Margin="250,-6,0,100" Visibility="Hidden"/>
-        <TextBox x:Name="txbTitle" Margin="25,180,25,0" TextWrapping="Wrap" Text="Title" VerticalAlignment="Top" Height="43" FontSize="24" Grid.Column="1" Foreground="White" Background="#FF262525" Visibility="Hidden"/>
-        <Label x:Name="lblGameName" Content="GameName" HorizontalAlignment="Left" Margin="25,29,0,0" VerticalAlignment="Top" FontSize="20" Width="340" Grid.Column="1" Foreground="White" Visibility="Hidden"/>
-        <Label x:Name="lblRatingText" Content="Rating (1-10)" HorizontalAlignment="Left" Margin="25,0,0,100" VerticalAlignment="Center" Grid.Column="1" Foreground="White" Visibility="Hidden"/>
-        <Button x:Name="btnSubmit" Content="Submit" HorizontalAlignment="Right" VerticalAlignment="Top" Height="50" Width="100" Click="btnSubmit_Click" Grid.Column="1" Margin="-7,100,25,0" Background="#FF333333" Foreground="White" Visibility="Hidden"/>
+        <Grid x:Name="ReviewGrid" Grid.Column="1" Visibility="Hidden">
+            <TextBox x:Name="txbContent" TextWrapping="Wrap" Text="Content" FontSize="18" Grid.Column="1" VerticalAlignment="Bottom" Margin="25,-1,25,25" Height="300" Foreground="White" Background="#FF252525"/>
+            <Slider x:Name="sldrRating" TickFrequency="1" IsSnapToTickEnabled="True" Value="1" Maximum="10" Minimum="1" HorizontalAlignment="Left" VerticalAlignment="Center" Width="119" ValueChanged="sldrRating_ValueChanged" Grid.Column="1" Margin="125,0,0,100"/>
+            <Label x:Name="lblRating" Content="1" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Foreground="White" Margin="250,-6,0,100"/>
+            <TextBox x:Name="txbTitle" Margin="25,180,25,0" TextWrapping="Wrap" Text="Title" VerticalAlignment="Top" Height="43" FontSize="24" Grid.Column="1" Foreground="White" Background="#FF262525"/>
+            <Label x:Name="lblGameName" Content="GameName" HorizontalAlignment="Left" Margin="25,29,0,0" VerticalAlignment="Top" FontSize="20" Width="340" Grid.Column="1" Foreground="White"/>
+            <Label x:Name="lblRatingText" Content="Rating (1-10)" HorizontalAlignment="Left" Margin="25,0,0,100" VerticalAlignment="Center" Grid.Column="1" Foreground="White"/>
+            <Button x:Name="btnSubmit" Content="Submit" HorizontalAlignment="Right" VerticalAlignment="Top" Height="50" Width="100" Click="btnSubmit_Click" Grid.Column="1" Margin="-7,100,25,0" Background="#FF333333" Foreground="White"/>
 
-        <ListBox x:Name="lbxReviews" ItemsSource="{Binding Reviews}" Background="#FF252525" Margin="25,100,25,25" Grid.Column="1" Foreground="White" Visibility="Hidden">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <Border BorderThickness="2" BorderBrush="Black" MaxWidth="300" Margin="5" Padding="10">
-                        <StackPanel Background="Aqua">
-                            <!-- Name and Rating -->
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="{Binding Name}" Foreground="BlueViolet" FontSize="20" FontWeight="Bold"/>
-                                <TextBlock Text="{Binding Rating}" Foreground="BlueViolet" FontSize="20" FontWeight="Bold" Grid.Column="1"/>
-                            </Grid>
+            <ListBox x:Name="lbxReviews" ItemsSource="{Binding Reviews}" Background="#FF252525" Margin="25,100,25,25" Grid.Column="1" Foreground="White">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border BorderThickness="2" BorderBrush="Black" MaxWidth="300" Margin="5" Padding="10">
+                            <StackPanel Background="Aqua">
+                                <!-- Name and Rating -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Name}" Foreground="BlueViolet" FontSize="20" FontWeight="Bold"/>
+                                    <TextBlock Text="{Binding Rating}" Foreground="BlueViolet" FontSize="20" FontWeight="Bold" Grid.Column="1"/>
+                                </Grid>
 
-                            <!-- Title -->
-                            <TextBlock Text="{Binding ReviewTitle}" Foreground="BlueViolet" FontSize="22" FontWeight="Bold" Margin="0,10,0,0"/>
+                                <!-- Title -->
+                                <TextBlock Text="{Binding ReviewTitle}" Foreground="BlueViolet" FontSize="22" FontWeight="Bold" Margin="0,10,0,0"/>
 
-                            <!-- Content -->
-                            <TextBlock Text="{Binding ReviewText}" Foreground="BlueViolet" FontSize="28" FontWeight="Bold" Margin="0,10,0,0"/>
-                        </StackPanel>
-                    </Border>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
-        <Button x:Name="btnChange" Content="Add Review" HorizontalAlignment="Right" VerticalAlignment="Top" Width="100" Height="50" Click="ReadWriteReviewButton_Click" Grid.Column="1" Margin="0,25,25,0" Background="#FF333333" Foreground="White" Visibility="Hidden"/>
+                                <!-- Content -->
+                                <TextBlock Text="{Binding ReviewText}" Foreground="BlueViolet" FontSize="28" FontWeight="Bold" Margin="0,10,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <Button x:Name="btnChange" Content="Add Review" HorizontalAlignment="Right" VerticalAlignment="Top" Width="100" Height="50" Click="ReadWriteReviewButton_Click" Grid.Column="1" Margin="0,25,25,0" Background="#FF333333" Foreground="White"/>
+        </Grid>
     </Grid>
 </Window>
