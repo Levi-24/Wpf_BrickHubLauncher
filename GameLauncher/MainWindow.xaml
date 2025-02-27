@@ -4,43 +4,52 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Game Launcher" Height="600" Width="1000" Background="#1E1E1E" ResizeMode="NoResize">
     <Grid>
-        <!-- Define Column Layout -->
+        <!-- Column Layout -->
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="250"/>
             <!-- Sidebar -->
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="250"/>
             <!-- Main Content -->
+            <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
         <!-- Sidebar Navigation -->
         <StackPanel Grid.Column="0" Background="#252525" Margin="0">
-            <TextBlock Text="Game Launcher" Foreground="White" FontSize="18" FontWeight="Bold" Margin="10"/>
-            <Button Content="Profile" Click="ProfileButton_Click" Margin="10,5" Padding="10" Background="#333" Foreground="White"/>
-            <Button Content="Review" Click="ReviewButton_Click" Margin="10,5" Padding="10" Background="#333" Foreground="White"/>
-            <Button Content="Library" Click="LibraryVisibilityOn" Padding="10" Margin="10,5" Background="#333" Foreground="White"/>
-            <Button Content="Log Out" Click="LogOutButton_Click" Margin="10,5" Padding="10" Background="#FF3333" Foreground="White"/>
+            <!-- Launcher Name -->
+            <TextBlock Text="Game Launcher" Margin="10,5" FontSize="18" FontWeight="Bold" Foreground="#F9FFFA"  />
+            <!-- Profile Button -->
+            <Button Content="Profile" Click="ProfileButton_Click" Margin="10,5" Padding="10" FontWeight="Bold" Background="#333" Foreground="#F9FFFA"/>
+            <!-- Review Button -->
+            <Button Content="Review" Click="ReviewButton_Click" Margin="10,5" Padding="10" FontWeight="Bold" Background="#333" Foreground="#F9FFFA"/>
+            <!-- Library Button -->
+            <Button Content="Library" Click="LibraryVisibilityOn" Margin="10,5" Padding="10" FontWeight="Bold" Background="#333" Foreground="#F9FFFA"/>
+            <!-- Log Out Button -->
+            <Button Content="Log Out" Click="LogOutButton_Click" Margin="10,5" Padding="10" FontWeight="Bold" Background="#FF3333" Foreground="#F9FFFA"/>
+            <!-- Games Label -->
+            <Label Content="Games" Margin="10,5" FontSize="12" FontWeight="Bold" HorizontalContentAlignment="Center" Foreground="#F9FFFA"/>
 
             <!-- Games List as an ItemsControl -->
-            <ItemsControl x:Name="GamesList" Margin="10,5" Background="#2A2A2A" MinHeight="350" >
-                <ItemsControl.ItemsSource>
-                    <Binding Path="Games" />
-                </ItemsControl.ItemsSource>
+            <ItemsControl x:Name="GamesList" Margin="10,5" Background="#2A2A2A" ItemsSource="{Binding Games}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Button Content="{Binding Name}" Click="GamesListItem_Click">
+                            <!-- Button Template -->
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" Padding="10">
-                                        <TextBlock Text="{Binding Name}"  Foreground="{TemplateBinding Foreground}" FontWeight="{TemplateBinding FontWeight}"/>
+                                        <!-- Game Name -->
+                                        <TextBlock Text="{Binding Name}" Foreground="{TemplateBinding Foreground}" FontWeight="{TemplateBinding FontWeight}"/>
                                     </Border>
                                 </ControlTemplate>
                             </Button.Template>
+                            <!-- Button Style -->
                             <Button.Style>
                                 <Style TargetType="Button">
+                                    <!-- Default Style -->
                                     <Setter Property="Background" Value="#333" />
                                     <Setter Property="Foreground" Value="White" />
                                     <Setter Property="FontWeight" Value="Normal" />
                                     <Setter Property="BorderThickness" Value="0" />
+                                    <!-- Hover Effect -->
                                     <Style.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
                                             <Setter Property="Background" Value="#666" />
@@ -55,55 +64,68 @@
         </StackPanel>
 
         <!-- Main Content Area -->
+        <!-- Library Grid -->
         <Grid x:Name="LibraryGrid" Grid.Column="1" Margin="10">
+            <!-- Library Row Layout -->
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <!-- Game Details -->
-            <Grid Grid.Row="1" Margin="0,10,0,10">
+            <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="300"/>
                     <!-- Game Image -->
-                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="300"/>
                     <!-- Game Info -->
+                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <Image x:Name="GameImage" Visibility="Visible" Width="250" Height="300" Stretch="Uniform" Grid.Column="0" Margin="10"/>
+                <!-- Game Image -->
+                <Image x:Name="GameImage" Width="250" Height="300" Stretch="Uniform" Grid.Column="0"/>
 
-                <StackPanel x:Name="spGameData" Visibility="Hidden" Grid.Column="1" Margin="10" VerticalAlignment="Center">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" Height="150">
-                        <TextBlock x:Name="GameDescription" TextWrapping="Wrap" Foreground="White" FontSize="14" Margin="5" VerticalAlignment="Bottom"/>
+                <StackPanel x:Name="GameInfo" Grid.Column="1" VerticalAlignment="Stretch">
+                    <!-- Game Name -->
+                    <TextBlock x:Name="tbGameName" Text="Game Name" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="White" Margin="5" FontSize="18"/>
+                    <!-- Game Description -->  
+                    <TextBlock Text="Description:" Foreground="Gray" Margin="5"/>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="100">
+                        <TextBlock x:Name="GameDescription" TextWrapping="Wrap" Foreground="White" Margin="5"/>
                     </ScrollViewer>
+                    <!-- Game Release Date -->
                     <TextBlock Text="Release Date:" Foreground="Gray" Margin="5"/>
                     <TextBlock x:Name="tbReleaseDate" Foreground="White" Margin="5"/>
+                    <!-- Game Developer -->
                     <TextBlock Text="Developer:" Foreground="Gray" Margin="5"/>
                     <TextBlock x:Name="tbDeveloper" Foreground="White" Margin="5"/>
+                    <!-- Game Publisher -->
                     <TextBlock Text="Publisher:" Foreground="Gray" Margin="5"/>
                     <TextBlock x:Name="tbPublisher" Foreground="White" Margin="5"/>
-                    <TextBlock Text="Playtime:" Foreground="Gray" Margin="5"/>
+                    <!-- Game Playtime -->
+                    <TextBlock Text="Your Playtime:" Foreground="Gray" Margin="5"/>
                     <TextBlock x:Name="tbPlaytime" Foreground="White" Margin="5"/>
-                    <TextBlock Text="Rating:" Foreground="Gray" Margin="5"/>
+                    <!-- Game Rating -->
+                    <TextBlock Text="Overall Rating:" Foreground="Gray" Margin="5"/>
                     <TextBlock x:Name="tbRating" Foreground="White" Margin="5"/>
                 </StackPanel>
             </Grid>
 
             <!-- Action Buttons -->
-            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
-                <Button x:Name="LaunchButton" Content="Launch" Click="LaunchButton_Click" Margin="5" Padding="10" Background="#3A8DFF" Foreground="White"/>
-                <Button Content="Uninstall" Click="UninstallButton_Click" Margin="5" Padding="10" Background="#FF5733" Foreground="White"/>
-                <Button x:Name="DownloadButton" Content="Download" Click="DownloadButton_Click" Margin="5" Padding="10" Background="#33C63A" Foreground="White"/>
+            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+                <Button x:Name="LaunchButton" Content="Launch" Click="LaunchButton_Click" Margin="5" Padding="10" Background="#3A8DFF" Foreground="Black" FontWeight="Bold" FontSize="14"/>
+                <Button x:Name="UninstallButton" Content="Uninstall" Click="UninstallButton_Click" Margin="5" Padding="10" Background="#FF5733" Foreground="Black" FontWeight="Bold" FontSize="14"/>
+                <Button x:Name="DownloadButton" Content="Download" Click="DownloadButton_Click" Margin="5" Padding="10" Background="#33C63A" Foreground="Black" FontWeight="Bold" FontSize="14"/>
             </StackPanel>
 
             <!-- Progress Bar -->
-            <ProgressBar x:Name="ProgressBar" Minimum="0" Maximum="100" Grid.Row="3" Height="10" Visibility="Hidden" Background="#444" Margin="10"/>
+            <ProgressBar x:Name="ProgressBar" Minimum="0" Maximum="100" Grid.Row="2" Height="10" Visibility="Hidden" Background="#444" Margin="10"/>
         </Grid>
 
 
 
+        
+        
 
         <!--REVIEW TYPE SHI-->
         <Grid x:Name="ReviewGrid" Grid.Column="1" Visibility="Hidden">
@@ -115,16 +137,18 @@
             <Label x:Name="lblRatingText" Content="Rating (1-10)" HorizontalAlignment="Left" Margin="25,0,0,100" VerticalAlignment="Center" Grid.Column="1" Foreground="White"/>
             <Button x:Name="btnSubmit" Content="Submit" HorizontalAlignment="Right" VerticalAlignment="Top" Height="50" Width="100" Click="btnSubmit_Click" Grid.Column="1" Margin="-7,100,25,0" Background="#FF333333" Foreground="White"/>
 
-            <ListBox x:Name="lbxReviews" ItemsSource="{Binding Reviews}" HorizontalContentAlignment="Stretch" Background="#FF252525" 
+            <ListBox x:Name="lbxReviews" ItemsSource="{Binding Reviews}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" Background="#FF252525" 
          Margin="25,100,25,25" Grid.Column="1" Foreground="White" ScrollViewer.CanContentScroll="False"
          AlternationCount="2">
 
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem">
                         <Setter Property="Background" Value="#333"/>
+                        <Setter Property="Focusable" Value="False"/>
+                        <Setter Property="IsHitTestVisible" Value="False"/>
                         <Style.Triggers>
                             <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                                <Setter Property="Background" Value="#444"/>
+                                <Setter Property="Background" Value="#FF424242"/>
                             </Trigger>
                         </Style.Triggers>
                     </Style>
@@ -145,10 +169,10 @@
                                 </Grid>
 
                                 <!-- Title -->
-                                <TextBlock Text="{Binding ReviewTitle}" Foreground="WhiteSmoke" FontSize="22" FontWeight="Bold" Margin="0,10,0,0"/>
+                                <TextBlock Text="{Binding ReviewTitle}" Foreground="WhiteSmoke" FontSize="22" TextWrapping="Wrap" FontWeight="Bold" Margin="0,10,0,0"/>
 
                                 <!-- Content -->
-                                <TextBlock Text="{Binding ReviewText}" Foreground="White" FontSize="28" FontWeight="Bold" Margin="0,10,0,0"/>
+                                <TextBlock Text="{Binding ReviewText}" Foreground="White" FontSize="28" TextWrapping="Wrap" Width="Auto" FontWeight="Bold" Margin="0,10,0,0"/>
                             </StackPanel>
                         </Border>
                     </DataTemplate>

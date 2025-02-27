@@ -230,9 +230,10 @@ namespace GameLauncher
         {
             if (SelectedGame != null)
             {
-                spGameData.Visibility = Visibility.Visible;
+                GameInfo.Visibility = Visibility.Visible;
                 DownloadButton.IsEnabled = !string.IsNullOrEmpty(SelectedGame.DownloadLink);
                 tbReleaseDate.Text = SelectedGame.ReleaseDate.ToString("yyyy MMMM dd.");
+                tbGameName.Text = SelectedGame.Name;
                 tbDeveloper.Text = SelectedGame.DeveloperName;
                 tbPublisher.Text = SelectedGame.PublisherName;
                 DownloadButton.Visibility = Visibility.Visible;
@@ -241,7 +242,7 @@ namespace GameLauncher
                 ProgressBar.Value = 0;
                 GameDescription.Text = SelectedGame.Description;
                 tbRating.Text = $"{SelectedGame.Rating}/10";
-                tbPlaytime.Text = $"Playtime: {SelectedGame.PlayTime} minutes";
+                tbPlaytime.Text = $"{SelectedGame.PlayTime} minutes";
                 GameImage.Source = new BitmapImage(new Uri(SelectedGame.LocalImagePath));
                 lblGameName.Content = SelectedGame.Name;
                 var loadedReviews = loadReviews(SelectedGame.Id);
