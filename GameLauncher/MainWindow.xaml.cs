@@ -7,26 +7,31 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Microsoft.Win32;
 using MySql.Data.MySqlClient;
 
 namespace GameLauncher
 {
     public partial class MainWindow : Window
     {
+        //Collections
         private ObservableCollection<Game> Games = new();
-        private ObservableCollection<ReviewClass> Reviews = new();
+        private ObservableCollection<Review> Reviews = new();
         private List<Game> Executables = new();
+        //Directory / File Paths
         private readonly string ImageDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DownloadedImages");
         private readonly string GameDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DownloadedGames");
-        private readonly string InstallationFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "installedGames.json");
+        private readonly string InstalledGamesFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "installedGames.json");
         private const string SettingsFile = "user.settings";
+        //DB Connection
         private const string ConnectionString = "Server=localhost;Database=game_launcher;Uid=root;Pwd=;";
+        //Variables
         private readonly int userId;
         private DateTime gameStartTime;
         private int totalPlaytimeMinutes;
+        //Selected Objects
         private Button _selectedButton;
         private Game _selectedGame;
         private Game SelectedGame
@@ -45,38 +50,13 @@ namespace GameLauncher
         public MainWindow()
         {
             InitializeComponent();
-            DownloadImageAsync("https://i.postimg.cc/mDvhPW7C/NoImage.jpg");
             LoadGamesAsync();
             userId = GetUserId();
             Executables = LoadGameExecutables();
             GamesList.ItemsSource = Games;
         }
 
-        private void GamesListItem_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button button && button.DataContext is Game selectedGame)
-            {
-                SelectedGame = selectedGame;
-            }
-            if (_selectedButton != null)
-            {
-                _selectedButton.ClearValue(Button.BackgroundProperty);
-                _selectedButton.ClearValue(Button.ForegroundProperty);
-                _selectedButton.ClearValue(Button.BorderThicknessProperty);
-                _selectedButton.ClearValue(Button.FontWeightProperty);
-            }
-
-            Button clickedButton = sender as Button;
-            if (clickedButton != null)
-            {
-                clickedButton.Background = new SolidColorBrush(Colors.LightSlateGray); // Highlight clicked button
-                clickedButton.Foreground = new SolidColorBrush(Colors.Black);
-                clickedButton.BorderThickness = new Thickness(3);
-                clickedButton.FontWeight = FontWeights.Bold;
-                _selectedButton = clickedButton;
-            }
-        }
-
+        #region Start
         private int GetUserId()
         {
             try
@@ -108,14 +88,6 @@ namespace GameLauncher
             }
         }
 
-        private void LogOutButton_Click(object sender, RoutedEventArgs e)
-        {
-            File.Delete(SettingsFile);
-            LoginWindow loginWindow = new LoginWindow();
-            loginWindow.Show();
-            Close();
-        }
-
         private async void LoadGamesAsync()
         {
             try
@@ -138,16 +110,15 @@ namespace GameLauncher
                     if (mySqlReader != null)
                     {
                         int playTime = LoadPlaytime(mySqlReader.GetInt32("id"));
-                        double rating = CalculateRating(mySqlReader.GetInt32("id"));
+                        double rating = LoadAverageRating(mySqlReader.GetInt32("id"));
                         var game = await ParseGameAsync(mySqlReader, playTime, rating);
                         Games.Add(game);
                     }
                 }
 
-                // Set the default selected game to the first game in the list if available
                 if (Games.Count > 0)
                 {
-                    SelectedGame = Games[0]; // Set the first game as the selected game
+                    SelectedGame = Games[0];
                 }
             }
             catch (Exception ex)
@@ -176,12 +147,12 @@ namespace GameLauncher
             }
             catch (Exception)
             {
-                MessageBox.Show("Playtime ERROR!");;
+                MessageBox.Show("Playtime ERROR!"); ;
                 throw;
             }
         }
 
-        private double CalculateRating(int gameId)
+        private double LoadAverageRating(int gameId)
         {
             try
             {
@@ -226,35 +197,6 @@ namespace GameLauncher
             return new Game(id, name, exeName, description, imageUrl, downloadLink, localImagePath, releaseDate, developerName, publisherName, playTime, rating);
         }
 
-        private void UpdateUIForSelectedGame()
-        {
-            if (SelectedGame != null)
-            {
-                GameInfo.Visibility = Visibility.Visible;
-                DownloadButton.IsEnabled = !string.IsNullOrEmpty(SelectedGame.DownloadLink);
-                tbReleaseDate.Text = SelectedGame.ReleaseDate.ToString("yyyy MMMM dd.");
-                tbGameName.Text = SelectedGame.Name;
-                tbDeveloper.Text = SelectedGame.DeveloperName;
-                tbPublisher.Text = SelectedGame.PublisherName;
-                DownloadButton.Visibility = Visibility.Visible;
-                LaunchButton.Visibility = Visibility.Visible;
-                ProgressBar.Visibility = Visibility.Visible;
-                ProgressBar.Value = 0;
-                GameDescription.Text = SelectedGame.Description;
-                tbRating.Text = $"{SelectedGame.Rating}/10";
-                tbPlaytime.Text = $"{SelectedGame.PlayTime} minutes";
-                GameImage.Source = new BitmapImage(new Uri(SelectedGame.LocalImagePath));
-                lblGameName.Content = SelectedGame.Name;
-                var loadedReviews = loadReviews(SelectedGame.Id);
-                Reviews.Clear();
-                foreach (var review in loadedReviews)
-                {
-                    Reviews.Add(review);
-                }
-                lbxReviews.ItemsSource = Reviews;
-            }
-        }
-
         private async Task<string> DownloadImageAsync(string url)
         {
             try
@@ -276,6 +218,197 @@ namespace GameLauncher
             catch
             {
                 return Path.Combine(ImageDirectory, "NoImage.jpg");
+            }
+        }
+        #endregion
+
+        #region Download & Install
+        private async void DownloadButton_Click(object sender, RoutedEventArgs e)
+        {
+            EnsureDirectoryExists(GameDirectory);
+            string zipPath = SelectDownloadDirectoryAsync(SelectedGame);
+            if (zipPath == null) return;
+
+            string installPath = zipPath.Remove(zipPath.Length - 4);
+
+            try
+            {
+                await DownloadAndInstallGameAsync(SelectedGame, zipPath, installPath);
+                SelectedGame.InstallPath = installPath;
+
+                string executablePath = Path.Combine(installPath, SelectedGame.ExeName);
+                var gameInstallationInfo = new Game(SelectedGame.Id, SelectedGame.ExeName, executablePath);
+
+                var gameInstallations = LoadGameExecutables();
+                gameInstallations.Add(gameInstallationInfo);
+                SaveGameExecutables(gameInstallations);
+
+                MessageBox.Show("Download completed!");
+                DownloadButton.IsEnabled = false;
+                Executables = LoadGameExecutables();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred: {ex.Message}");
+            }
+        }
+
+        private static void EnsureDirectoryExists(string directoryPath)
+        {
+            if (!Directory.Exists(directoryPath))
+                Directory.CreateDirectory(directoryPath);
+        }
+
+        private string SelectDownloadDirectoryAsync(Game selectedGame)
+        {
+            var folderDialog = new OpenFolderDialog
+            {
+                Title = "Select Folder",
+                InitialDirectory = GameDirectory
+            };
+
+            if (folderDialog.ShowDialog() == true)
+            {
+                var folderName = folderDialog.FolderName;
+                return Path.Combine(folderDialog.FolderName, $"{selectedGame.Name}.zip");
+            }
+
+            return null;
+        }
+
+        private async Task DownloadAndInstallGameAsync(Game game, string zipPath, string installPath)
+        {
+            var progress = new Progress<double>(value => ProgressBar.Value = value);
+            await DownloadFileWithProgressAsync(game.DownloadLink, zipPath, progress);
+            ExtractZip(zipPath, installPath);
+        }
+        //Fogalmam sincs hogy működikˇˇˇˇˇˇˇˇˇˇ
+        private async Task DownloadFileWithProgressAsync(string fileUrl, string destinationPath, IProgress<double> progress)
+        {
+            using HttpClient client = new();
+            using var response = await client.GetAsync(fileUrl, HttpCompletionOption.ResponseHeadersRead);
+            response.EnsureSuccessStatusCode();
+
+            long totalBytes = response.Content.Headers.ContentLength ?? -1L;
+            bool canReportProgress = totalBytes != -1 && progress != null;
+
+            using var contentStream = await response.Content.ReadAsStreamAsync();
+            using var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
+
+            byte[] buffer = new byte[8192];
+            long totalRead = 0;
+            int bytesRead;
+
+            while ((bytesRead = await contentStream.ReadAsync(buffer)) > 0)
+            {
+                await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead));
+                totalRead += bytesRead;
+
+                if (canReportProgress)
+                {
+                    double percentage = (double)totalRead / totalBytes * 100;
+                    progress.Report(percentage);
+                }
+            }
+        }
+
+        public void ExtractZip(string zipPath, string installPath)
+        {
+            EnsureDirectoryExists(installPath);
+            ZipFile.ExtractToDirectory(zipPath, installPath);
+            File.Delete(zipPath);
+        }
+        #endregion
+
+        #region EXE Handling
+        private List<Game> LoadGameExecutables()
+        {
+            try
+            {
+                if (File.Exists(InstalledGamesFilePath))
+                {
+                    var json = File.ReadAllText(InstalledGamesFilePath);
+                    return JsonSerializer.Deserialize<List<Game>>(json) ?? new List<Game>();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading game data: {ex.Message}");
+            }
+            return new List<Game>();
+        }
+
+        private void SaveGameExecutables(List<Game> games)
+        {
+            try
+            {
+                var simplifiedGameInfo = games.Select(game => new
+                {
+                    game.Id,
+                    game.ExeName,
+                    game.ExecutablePath
+                }).ToList();
+
+                var json = JsonSerializer.Serialize(simplifiedGameInfo);
+                File.WriteAllText(InstalledGamesFilePath, json);
+            }
+            catch (JsonException jsonEx)
+            {
+                MessageBox.Show($"Error serializing game data: {jsonEx.Message}");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error saving game data: {ex.Message}");
+            }
+        }
+        #endregion
+
+        #region External Window
+        private void LogOutButton_Click(object sender, RoutedEventArgs e)
+        {
+            File.Delete(SettingsFile);
+            LoginWindow loginWindow = new LoginWindow();
+            loginWindow.Show();
+            Close();
+        }
+
+        private void ProfileButton_Click(object sender, RoutedEventArgs e)
+        {
+            Profile profileWindow = new Profile(userId);
+            profileWindow.Show();
+        }
+        #endregion
+
+        private void UpdateUIForSelectedGame()
+        {
+            if (SelectedGame != null)
+            {
+                DownloadButton.IsEnabled = !string.IsNullOrEmpty(SelectedGame.DownloadLink);
+                if (Executables.Where(x => x.Id == SelectedGame.Id).Count() > 0)
+                {
+                    DownloadButton.IsEnabled = false;
+                }
+                GameInfo.Visibility = Visibility.Visible;
+                tbReleaseDate.Text = SelectedGame.ReleaseDate.ToString("yyyy MMMM dd.");
+                tbGameName.Text = SelectedGame.Name;
+                tbDeveloper.Text = SelectedGame.DeveloperName;
+                tbPublisher.Text = SelectedGame.PublisherName;
+                DownloadButton.Visibility = Visibility.Visible;
+                LaunchButton.Visibility = Visibility.Visible;
+                ProgressBar.Visibility = Visibility.Visible;
+                ProgressBar.Value = 0;
+                GameDescription.Text = SelectedGame.Description;
+                tbRating.Text = $"{SelectedGame.Rating}/10";
+                tbPlaytime.Text = $"{SelectedGame.PlayTime} minutes";
+                GameImage.Source = new BitmapImage(new Uri(SelectedGame.LocalImagePath));
+                lblGameName.Text = SelectedGame.Name;
+                var loadedReviews = LoadReviews(SelectedGame.Id);
+                Reviews.Clear();
+                foreach (var review in loadedReviews)
+                {
+                    Reviews.Add(review);
+                }
+                lbxReviews.ItemsSource = Reviews;
             }
         }
 
@@ -369,149 +502,6 @@ namespace GameLauncher
             }
         }
 
-        private async void DownloadButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (SelectedGame == null) return;
-
-            if (Executables.Where(x => x.Id == SelectedGame.Id).Count() != 0)
-            {
-                MessageBox.Show("This Game is already installed!");
-                return;
-            }
-
-            EnsureDirectoryExists(GameDirectory);
-            string targetPath = await SelectDownloadDirectoryAsync(SelectedGame);
-            if (targetPath == null) return;
-
-            string installPath = targetPath.Remove(targetPath.Length - 4);
-
-            try
-            {
-                await DownloadAndInstallGameAsync(SelectedGame, targetPath, installPath);
-                SelectedGame.InstallPath = installPath;
-
-                string executablePath = Path.Combine(installPath, SelectedGame.ExeName);
-                var gameInfo = new Game(SelectedGame.Id, SelectedGame.ExeName, executablePath);
-
-                var gameInstallations = LoadGameExecutables();
-                gameInstallations.Add(gameInfo);
-                SaveGameExecutables(gameInstallations);
-
-                MessageBox.Show("Download completed!");
-                Executables = LoadGameExecutables();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"An error occurred: {ex.Message}");
-            }
-        }
-
-        private async Task<string> SelectDownloadDirectoryAsync(Game selectedGame)
-        {
-            using var dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog
-            {
-                IsFolderPicker = true,
-                InitialDirectory = GameDirectory
-            };
-
-            if (dialog.ShowDialog() == Microsoft.WindowsAPICodePack.Dialogs.CommonFileDialogResult.Ok)
-                return Path.Combine(dialog.FileName, $"{selectedGame.Name}.zip");
-
-            return null;
-        }
-
-        private async Task DownloadAndInstallGameAsync(Game game, string targetPath, string installPath)
-        {
-            if (Directory.Exists(installPath))
-            {
-                MessageBox.Show("The file is already downloaded!");
-                return;
-            }
-
-            var progress = new Progress<double>(value => ProgressBar.Value = value);
-            await DownloadFileWithProgressAsync(game.DownloadLink, targetPath, progress);
-            ExtractZip(targetPath, installPath);
-        }
-
-        private async Task DownloadFileWithProgressAsync(string fileUrl, string destinationPath, IProgress<double> progress)
-        {
-            using HttpClient client = new();
-            using var response = await client.GetAsync(fileUrl, HttpCompletionOption.ResponseHeadersRead);
-            response.EnsureSuccessStatusCode();
-
-            long totalBytes = response.Content.Headers.ContentLength ?? -1L;
-            bool canReportProgress = totalBytes != -1 && progress != null;
-
-            using var contentStream = await response.Content.ReadAsStreamAsync();
-            using var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
-
-            byte[] buffer = new byte[8192];
-            long totalRead = 0;
-            int bytesRead;
-
-            while ((bytesRead = await contentStream.ReadAsync(buffer)) > 0)
-            {
-                await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead));
-                totalRead += bytesRead;
-
-                if (canReportProgress)
-                {
-                    double percentage = (double)totalRead / totalBytes * 100;
-                    progress.Report(percentage);
-                }
-            }
-        }
-
-        public void ExtractZip(string zipFilePath, string installDirectory)
-        {
-            EnsureDirectoryExists(installDirectory);
-            ZipFile.ExtractToDirectory(zipFilePath, installDirectory);
-            File.Delete(zipFilePath);
-        }
-
-        private static void EnsureDirectoryExists(string directoryPath)
-        {
-            if (!Directory.Exists(directoryPath))
-                Directory.CreateDirectory(directoryPath);
-        }
-
-        private void SaveGameExecutables(List<Game> games)
-        {
-            try
-            {
-                var simplifiedGames = games.Select(game => new
-                {
-                    game.Id,
-                    game.ExeName,
-                    game.ExecutablePath
-                }).ToList();
-
-                var json = JsonSerializer.Serialize(simplifiedGames);
-                File.WriteAllText(InstallationFilePath, json);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error saving game data: {ex.Message}");
-            }
-        }
-
-        private List<Game> LoadGameExecutables()
-        {
-            try
-            {
-                if (File.Exists(InstallationFilePath))
-                {
-                    var json = File.ReadAllText(InstallationFilePath);
-                    return JsonSerializer.Deserialize<List<Game>>(json) ?? new List<Game>();
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error loading game data: {ex.Message}");
-            }
-            return new List<Game>();
-        }
-
         private void UninstallButton_Click(object sender, RoutedEventArgs e)
         {
             if (MessageBox.Show("Are you sure you want to uninstall this game?", "Confirm Uninstall", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
@@ -538,6 +528,7 @@ namespace GameLauncher
                         SaveGameExecutables(gameInstallations);
 
                         MessageBox.Show("Game uninstalled successfully!");
+                        DownloadButton.IsEnabled = true;
 
                         Executables = LoadGameExecutables();
                     }
@@ -553,77 +544,17 @@ namespace GameLauncher
             }
         }
 
-        private async void ProfileButton_Click(object sender, RoutedEventArgs e)
-        {
-            Profile profileWindow = new Profile(userId);
-            profileWindow.Show();
-        }
-
-        private void ReadWriteReviewButton_Click(object sender, RoutedEventArgs e)
-        {
-            lbxReviews.Visibility = lbxReviews.Visibility == Visibility.Visible ? Visibility.Hidden : Visibility.Visible;
-            btnChange.Content = btnChange.Content.Equals("Add Review") ? "Show Reviews" : "Add Review";
-        }
-
-        private void btnSubmit_Click(object sender, RoutedEventArgs e)
+        #region Review
+        private ObservableCollection<Review> LoadReviews(int gameId)
         {
             try
             {
-                using (MySqlConnection connection = new MySqlConnection(ConnectionString))
-                {
-                    connection.Open();
-
-                    string query = @"
-                        INSERT INTO reviews (game_id, user_id, rating, review_title, review_text)
-                        VALUES (@GameId, @UserId, @Rating, @Title, @Text)";
-
-                    using (MySqlCommand cmd = new MySqlCommand(query, connection))
-                    {
-                        cmd.Parameters.AddWithValue("@GameId", SelectedGame.Id);
-                        cmd.Parameters.AddWithValue("@UserId", userId);
-                        cmd.Parameters.AddWithValue("@Rating", sldrRating.Value);
-                        cmd.Parameters.AddWithValue("@Title", txbTitle.Text);
-                        cmd.Parameters.AddWithValue("@Text", txbContent.Text);
-
-                        cmd.ExecuteNonQuery();
-                    }
-                }
-
-                ReviewButton_Click(sender, e);
-                lbxReviews.Visibility = Visibility.Visible;
-                MessageBox.Show("Review submitted successfully");
-
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Database error: {ex.Message}");
-            }
-
-            txbContent.Text = "Content";
-            txbTitle.Text = "Title";
-            sldrRating.Value = 1;
-            lblRating.Content = "1";
-        }
-
-        private void sldrRating_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            if (lblRating != null && sldrRating != null)
-            {
-                lblRating.Content = sldrRating.Value;
-            }
-        }
-
-        private ObservableCollection<ReviewClass> loadReviews(int currentGameId)
-        {
-            try
-            {
-                ObservableCollection<ReviewClass> reviews = new();
+                ObservableCollection<Review> reviews = new();
 
                 using (MySqlConnection connection = new MySqlConnection(ConnectionString))
                 {
                     connection.Open();
-                    string query = $"SELECT * FROM reviews WHERE game_id = '{currentGameId}';";
-
+                    string query = $"SELECT * FROM reviews WHERE game_id = '{gameId}';";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, connection))
                     {
@@ -631,11 +562,8 @@ namespace GameLauncher
                         {
                             while (reader.Read())
                             {
-                                int reviewUserId = reader.GetInt32("user_id");
-                                string reviewName = getName(reviewUserId);
-
-                                reviews.Add(new ReviewClass(
-                                    reviewName,
+                                reviews.Add(new Review(
+                                    GetUsername(reader.GetInt32("user_id")),
                                     reader.GetInt32("rating"),
                                     reader.GetString("review_title"),
                                     reader.GetString("review_text")
@@ -649,19 +577,18 @@ namespace GameLauncher
             catch (Exception)
             {
                 MessageBox.Show("Error while connecting to the database");
-                lblGameName.Content = $"Game ID : {currentGameId}";
                 throw;
             }
         }
 
-        private string getName(int reviewUserId)
+        private string GetUsername(int UserId)
         {
             try
             {
                 using (MySqlConnection connection = new MySqlConnection(ConnectionString))
                 {
                     connection.Open();
-                    string query = $"SELECT name FROM users WHERE id = '{reviewUserId}';";
+                    string query = $"SELECT name FROM users WHERE id = '{UserId}';";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, connection))
                     {
@@ -672,85 +599,117 @@ namespace GameLauncher
             catch (Exception)
             {
                 MessageBox.Show("Error while connecting to the database");
-                return "Unknown";
                 throw;
             }
         }
 
-        private void LibraryVisibilityOff(object sender, RoutedEventArgs e)
+        private void DisplayReviews(object sender, RoutedEventArgs e)
         {
-            LibraryGrid.Visibility = Visibility.Hidden;
+            Reviews.Clear();
+            ChangeReviewVisibility(sender, e);
+
+            try
+            {
+                lblGameName.Text = SelectedGame.Name;
+                Reviews = LoadReviews(SelectedGame.Id);
+                lbxReviews.ItemsSource = Reviews;
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Error while loading reviews");
+                throw;
+            }
         }
 
-        private void LibraryVisibilityOn(object sender, RoutedEventArgs e)
+        private void SubmitReview(object sender, RoutedEventArgs e)
         {
-            if (SelectedGame == null)
+            try
             {
-                MessageBox.Show("Please Select a Game");
+                using (MySqlConnection connection = new MySqlConnection(ConnectionString))
+                {
+                    connection.Open();
+                    string query = @"
+                        INSERT INTO reviews (game_id, user_id, rating, review_title, review_text)
+                        VALUES (@GameId, @UserId, @Rating, @Title, @Text)";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, connection))
+                    {
+                        cmd.Parameters.AddWithValue("@GameId", SelectedGame.Id);
+                        cmd.Parameters.AddWithValue("@UserId", userId);
+                        cmd.Parameters.AddWithValue("@Rating", sldrRating.Value);
+                        cmd.Parameters.AddWithValue("@Title", txbTitle.Text);
+                        cmd.Parameters.AddWithValue("@Text", txbContent.Text);
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+
+                MessageBox.Show("Review submitted successfully");
+                DisplayReviews(sender, e);
+                lbxReviews.Visibility = Visibility.Visible;
             }
-            else
+            catch (Exception ex)
             {
-                LibraryGrid.Visibility = Visibility.Visible;
-                ReviewVisibilityOff(sender, e);
+                MessageBox.Show($"Database error: {ex.Message}");
             }
+
+            txbContent.Text = "Content";
+            txbTitle.Text = "Title";
+            sldrRating.Value = 1;
+            lblRating.Text = "1";
         }
 
-        private void ReviewVisibilityOff(object sender, RoutedEventArgs e)
+        private void SwitchReviewMode(object sender, RoutedEventArgs e)
         {
+            lbxReviews.Visibility = lbxReviews.Visibility == Visibility.Visible ? Visibility.Hidden : Visibility.Visible;
+            btnChange.Content = btnChange.Content.Equals("Add Review") ? "Show Reviews" : "Add Review";
+        }
+        #endregion
+
+        #region UI
+        private void ChangeLibraryVisibility(object sender, RoutedEventArgs e)
+        {
+            LibraryGrid.Visibility = Visibility.Visible;
             ReviewGrid.Visibility = Visibility.Hidden;
         }
 
-        private void ReviewVisibilityOn(object sender, RoutedEventArgs e)
+        private void ChangeReviewVisibility(object sender, RoutedEventArgs e)
         {
             ReviewGrid.Visibility = Visibility.Visible;
-            LibraryVisibilityOff(sender, e);
+            LibraryGrid.Visibility = Visibility.Hidden;
         }
 
-        private void ReviewButton_Click(object sender, RoutedEventArgs e)
+        private void RatingSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            if (SelectedGame != null)
+            if (lblRating != null && sldrRating != null)
             {
-                    Reviews.Clear();
-                    var currentGameId = SelectedGame.Id;
-                    var currentUserId = userId;
-                ReviewVisibilityOn(sender, e);
-
-                InitializeComponent();
-
-                    this.DataContext = this;
-
-                    try
-                    {
-                        using (MySqlConnection connection = new MySqlConnection(ConnectionString))
-                        {
-                            connection.Open();
-                            string query = $"SELECT name FROM games WHERE id = '{currentGameId}';";
-
-                            using (MySqlCommand cmd = new MySqlCommand(query, connection))
-                            {
-                                lblGameName.Content = cmd.ExecuteScalar().ToString();
-                            }
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        MessageBox.Show("Error while connecting to the database");
-                        lblGameName.Content = $"Game ID : {currentGameId}";
-                        throw;
-                    }
-
-                    var loadedReviews = loadReviews(currentGameId);
-                    foreach (var review in loadedReviews)
-                    {
-                        Reviews.Add(review);
-                    }
-
-                    lbxReviews.ItemsSource = Reviews;
-            }
-            else
-            {
-                MessageBox.Show("No game selected!");
+                lblRating.Text = Convert.ToString(sldrRating.Value);
             }
         }
+
+        private void ChangeSelectedGameButton(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.DataContext is Game selectedGame)
+            {
+                SelectedGame = selectedGame;
+            }
+            if (_selectedButton != null)
+            {
+                _selectedButton.ClearValue(BackgroundProperty);
+                _selectedButton.ClearValue(ForegroundProperty);
+                _selectedButton.ClearValue(BorderThicknessProperty);
+                _selectedButton.ClearValue(FontWeightProperty);
+            }
+
+            Button clickedButton = sender as Button;
+            if (clickedButton != null)
+            {
+                clickedButton.Background = new SolidColorBrush(Colors.LightSlateGray);
+                clickedButton.Foreground = new SolidColorBrush(Colors.Black);
+                clickedButton.BorderThickness = new Thickness(3);
+                clickedButton.FontWeight = FontWeights.Bold;
+                _selectedButton = clickedButton;
+            }
+        }
+        #endregion
     }
 }
