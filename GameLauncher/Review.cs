@@ -2,17 +2,21 @@
 {
     public class Review
     {
-        public string Name { get; set; }
+        public int UserId { get; set; }
+        public string UserName { get; set; }
         public int Rating { get; set; }
         public string ReviewTitle { get; set; }
         public string ReviewText { get; set; }
+        public bool IsCurrentUser { get; set; }
 
-        public Review(string name, int rating, string reviewTitle, string reviewText)
+        public Review(int userId, string userName, int rating, string reviewTitle, string reviewText, bool isCurrentUser)
         {
-            Name = name;
+            UserId = userId;
+            UserName = userName;
             Rating = rating;
             ReviewTitle = reviewTitle;
             ReviewText = reviewText;
+            IsCurrentUser = isCurrentUser;
         }
     }
 }

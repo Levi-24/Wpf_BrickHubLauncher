@@ -37,7 +37,7 @@ namespace GameLauncher
                     (string storedHash, string storedSalt) = GetStoredPasswordHashAndSalt(DBConnectionString, savedName);
                     if (storedHash == savedHash && storedSalt == savedSalt)
                     {
-                        MainWindow mainWindow = new MainWindow();
+                        MainWindow mainWindow = new MainWindow(savedName);
                         mainWindow.Show();
                         this.Close();
                     }
@@ -100,7 +100,7 @@ namespace GameLauncher
                     File.Delete(SettingsFile);
                 }
 
-                MainWindow mainWindow = new MainWindow();
+                MainWindow mainWindow = new MainWindow(name);
                 mainWindow.Show();
                 this.Close();
             }

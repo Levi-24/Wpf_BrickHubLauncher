@@ -15,7 +15,6 @@
             <TextBlock Text="Game Launcher" Margin="10,5" FontSize="18" FontWeight="Bold" Foreground="#F9FFFA"/>
 
             <StackPanel>
-                <Button Content="Profile" Click="ProfileButton_Click" Style="{StaticResource SidebarButtonStyle}"/>
                 <Button Content="Review" Click="DisplayReviews" Style="{StaticResource SidebarButtonStyle}"/>
                 <Button Content="Library" Click="ChangeLibraryVisibility" Style="{StaticResource SidebarButtonStyle}"/>
                 <Button Content="Log Out" Click="LogOutButton_Click" Style="{StaticResource LogoutButtonStyle}"/>
@@ -116,7 +115,7 @@
                                         <ColumnDefinition Width="auto" />
                                     </Grid.ColumnDefinitions>
                                     <!-- Name -->
-                                    <TextBlock Text="{Binding Name}" Foreground="WhiteSmoke" FontSize="20" FontWeight="Bold"/>
+                                    <TextBlock Text="{Binding UserName}" Foreground="WhiteSmoke" FontSize="20" FontWeight="Bold"/>
                                     <!-- Rating -->
                                     <TextBlock Text="{Binding Rating}" Foreground="WhiteSmoke" FontSize="20" FontWeight="Bold" Grid.Column="1"/>
                                 </Grid>
@@ -126,6 +125,16 @@
                                 <TextBlock Text="{Binding ReviewText}" Foreground="White" FontSize="28" TextWrapping="Wrap" Width="Auto" FontWeight="Bold" Margin="0,10,0,0"/>
                             </StackPanel>
                         </Border>
+                        <DataTemplate.Resources>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsCurrentUser}" Value="True">
+                                        <Setter Property="Background" Value="LightGreen"/>
+                                        <!-- Highlight color -->
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataTemplate.Resources>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>

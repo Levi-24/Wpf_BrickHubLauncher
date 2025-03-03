@@ -30,7 +30,6 @@ namespace GameLauncher
         //Variables
         private readonly int userId;
         private DateTime gameStartTime;
-        private int totalPlaytimeMinutes;
         //Selected Objects
         private Button _selectedButton;
         private Game _selectedGame;
@@ -47,29 +46,24 @@ namespace GameLauncher
             }
         }
 
-        public MainWindow()
+        public MainWindow(string userName)
         {
             InitializeComponent();
             LoadGamesAsync();
-            userId = GetUserId();
+            userId = GetUserId(userName);
             Executables = LoadGameExecutables();
             GamesList.ItemsSource = Games;
         }
 
         #region Start
-        private int GetUserId()
+        private int GetUserId(string userName)
         {
             try
             {
                 using (MySqlConnection connection = new MySqlConnection(ConnectionString))
                 {
                     connection.Open();
-                    using StreamReader reader = new StreamReader(SettingsFile);
-                    string fullSettings = reader.ReadToEnd();
-                    string[] pieces = fullSettings.Split(';');
-
-                    string savedName = pieces[0];
-                    string query = $"SELECT id FROM users WHERE name = '{savedName}';";
+                    string query = $"SELECT id FROM users WHERE name = '{userName}';";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, connection))
                     {
@@ -363,7 +357,7 @@ namespace GameLauncher
         }
         #endregion
 
-        #region External Window
+        #region Logout
         private void LogOutButton_Click(object sender, RoutedEventArgs e)
         {
             File.Delete(SettingsFile);
@@ -371,47 +365,9 @@ namespace GameLauncher
             loginWindow.Show();
             Close();
         }
-
-        private void ProfileButton_Click(object sender, RoutedEventArgs e)
-        {
-            Profile profileWindow = new Profile(userId);
-            profileWindow.Show();
-        }
         #endregion
 
-        private void UpdateUIForSelectedGame()
-        {
-            if (SelectedGame != null)
-            {
-                DownloadButton.IsEnabled = !string.IsNullOrEmpty(SelectedGame.DownloadLink);
-                if (Executables.Where(x => x.Id == SelectedGame.Id).Count() > 0)
-                {
-                    DownloadButton.IsEnabled = false;
-                }
-                GameInfo.Visibility = Visibility.Visible;
-                tbReleaseDate.Text = SelectedGame.ReleaseDate.ToString("yyyy MMMM dd.");
-                tbGameName.Text = SelectedGame.Name;
-                tbDeveloper.Text = SelectedGame.DeveloperName;
-                tbPublisher.Text = SelectedGame.PublisherName;
-                DownloadButton.Visibility = Visibility.Visible;
-                LaunchButton.Visibility = Visibility.Visible;
-                ProgressBar.Visibility = Visibility.Visible;
-                ProgressBar.Value = 0;
-                GameDescription.Text = SelectedGame.Description;
-                tbRating.Text = $"{SelectedGame.Rating}/10";
-                tbPlaytime.Text = $"{SelectedGame.PlayTime} minutes";
-                GameImage.Source = new BitmapImage(new Uri(SelectedGame.LocalImagePath));
-                lblGameName.Text = SelectedGame.Name;
-                var loadedReviews = LoadReviews(SelectedGame.Id);
-                Reviews.Clear();
-                foreach (var review in loadedReviews)
-                {
-                    Reviews.Add(review);
-                }
-                lbxReviews.ItemsSource = Reviews;
-            }
-        }
-
+        #region Launch & Playtime
         private void LaunchButton_Click(object sender, RoutedEventArgs e)
         {
             if (SelectedGame != null)
@@ -457,11 +413,12 @@ namespace GameLauncher
                 TimeSpan playDuration = DateTime.Now - gameStartTime;
                 int minutesPlayed = (int)playDuration.TotalMinutes;
 
-                totalPlaytimeMinutes += minutesPlayed;
-
                 DateTime lastPlayed = DateTime.Now;
 
                 SavePlaytimeToDatabase(userId, gameID, minutesPlayed, lastPlayed);
+                int playTime = LoadPlaytime(gameID);
+                Games.First(g => g.Id == SelectedGame.Id).PlayTime = playTime;
+                //tbPlaytime.Text = $"{SelectedGame.PlayTime} minutes"; valami szar a threadekkel
             }
             catch (Exception ex)
             {
@@ -471,7 +428,6 @@ namespace GameLauncher
 
         private void SavePlaytimeToDatabase(int userId, int gameId, int minutesPlayed, DateTime lastPlayed)
         {
-
             try
             {
                 using (MySqlConnection connection = new MySqlConnection(ConnectionString))
@@ -479,11 +435,11 @@ namespace GameLauncher
                     connection.Open();
 
                     string query = @"
-                        INSERT INTO playtime (user_id, game_id, playtime_minutes, last_played)
-                        VALUES (@UserId, @GameId, @MinutesPlayed, @LastPlayed)
-                        ON DUPLICATE KEY UPDATE 
-                        playtime_minutes = playtime_minutes + VALUES(playtime_minutes),
-                        last_played = VALUES(last_played);";
+                INSERT INTO playtime (user_id, game_id, playtime_minutes, last_played)
+                VALUES (@UserId, @GameId, @MinutesPlayed, @LastPlayed)
+                ON DUPLICATE KEY UPDATE 
+                playtime_minutes = playtime_minutes + @MinutesPlayed,
+                last_played = @LastPlayed;";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, connection))
                     {
@@ -499,6 +455,41 @@ namespace GameLauncher
             catch (Exception ex)
             {
                 MessageBox.Show($"Database error: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        private void UpdateUIForSelectedGame()
+        {
+            if (SelectedGame != null)
+            {
+                DownloadButton.IsEnabled = !string.IsNullOrEmpty(SelectedGame.DownloadLink);
+                if (Executables.Where(x => x.Id == SelectedGame.Id).Count() > 0)
+                {
+                    DownloadButton.IsEnabled = false;
+                }
+                GameInfo.Visibility = Visibility.Visible;
+                tbReleaseDate.Text = SelectedGame.ReleaseDate.ToString("yyyy MMMM dd.");
+                tbGameName.Text = SelectedGame.Name;
+                tbDeveloper.Text = SelectedGame.DeveloperName;
+                tbPublisher.Text = SelectedGame.PublisherName;
+                DownloadButton.Visibility = Visibility.Visible;
+                LaunchButton.Visibility = Visibility.Visible;
+                ProgressBar.Visibility = Visibility.Visible;
+                ProgressBar.Value = 0;
+                GameDescription.Text = SelectedGame.Description;
+                tbRating.Text = $"{SelectedGame.Rating}/10";
+                tbPlaytime.Text = $"{SelectedGame.PlayTime} minutes";
+                GameImage.Source = new BitmapImage(new Uri(SelectedGame.LocalImagePath));
+                lblGameName.Text = SelectedGame.Name;
+                var loadedReviews = LoadReviews(SelectedGame.Id);
+                Reviews.Clear();
+                foreach (var review in loadedReviews)
+                {
+                    Reviews.Add(review);
+                }
+                lbxReviews.ItemsSource = Reviews;
             }
         }
 
@@ -563,10 +554,12 @@ namespace GameLauncher
                             while (reader.Read())
                             {
                                 reviews.Add(new Review(
+                                    reader.GetInt32("user_id"),
                                     GetUsername(reader.GetInt32("user_id")),
                                     reader.GetInt32("rating"),
                                     reader.GetString("review_title"),
-                                    reader.GetString("review_text")
+                                    reader.GetString("review_text"),
+                                    reader.GetInt32("user_id") == userId
                                 ));
                             }
                         }
@@ -643,6 +636,9 @@ namespace GameLauncher
                     }
                 }
 
+                double rating = LoadAverageRating(SelectedGame.Id);
+                Games.First(g => g.Id == SelectedGame.Id).Rating = rating;
+
                 MessageBox.Show("Review submitted successfully");
                 DisplayReviews(sender, e);
                 lbxReviews.Visibility = Visibility.Visible;
@@ -670,6 +666,7 @@ namespace GameLauncher
         {
             LibraryGrid.Visibility = Visibility.Visible;
             ReviewGrid.Visibility = Visibility.Hidden;
+            UpdateUIForSelectedGame();
         }
 
         private void ChangeReviewVisibility(object sender, RoutedEventArgs e)
