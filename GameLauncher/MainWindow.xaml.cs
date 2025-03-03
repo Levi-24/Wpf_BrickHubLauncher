@@ -46,24 +46,24 @@ namespace GameLauncher
             }
         }
 
-        public MainWindow(string userName)
+        public MainWindow(string email)
         {
             InitializeComponent();
             LoadGamesAsync();
-            userId = GetUserId(userName);
+            userId = GetUserId(email);
             Executables = LoadGameExecutables();
             GamesList.ItemsSource = Games;
         }
 
         #region Start
-        private int GetUserId(string userName)
+        private int GetUserId(string email)
         {
             try
             {
                 using (MySqlConnection connection = new MySqlConnection(ConnectionString))
                 {
                     connection.Open();
-                    string query = $"SELECT id FROM users WHERE name = '{userName}';";
+                    string query = $"SELECT id FROM users WHERE email = '{email}';";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, connection))
                     {

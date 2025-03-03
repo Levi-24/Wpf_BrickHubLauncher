@@ -122,7 +122,7 @@ namespace GameLauncher
                 string query = "SELECT password_hash, salt FROM users WHERE email = @email";
                 using (MySqlCommand cmd = new MySqlCommand(query, conn))
                 {
-                    cmd.Parameters.AddWithValue("@name", email);
+                    cmd.Parameters.AddWithValue("@email", email);
                     using (MySqlDataReader reader = cmd.ExecuteReader())
                     {
                         if (reader.Read())
@@ -190,8 +190,8 @@ namespace GameLauncher
                         chkRemember.Visibility = Visibility.Visible;
                         lblPassAgain.Visibility = Visibility.Hidden;
                         txtPassAgain.Visibility = Visibility.Hidden;
-                        lblEmail.Visibility = Visibility.Hidden;
-                        txtEmail.Visibility = Visibility.Hidden;
+                        lblName.Visibility = Visibility.Hidden;
+                        txtName.Visibility = Visibility.Hidden;
                     }
                     else
                     {
