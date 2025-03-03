@@ -17,9 +17,9 @@ namespace GameLauncher
     public partial class MainWindow : Window
     {
         //Collections
-        private ObservableCollection<Game> Games = new();
-        private ObservableCollection<Review> Reviews = new();
-        private List<Game> Executables = new();
+        private readonly ObservableCollection<Game> Games = [];
+        private ObservableCollection<Review> Reviews = [];
+        private List<Game> Executables = [];
         //Directory / File Paths
         private readonly string ImageDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DownloadedImages");
         private readonly string GameDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DownloadedGames");
@@ -60,21 +60,17 @@ namespace GameLauncher
         {
             try
             {
-                using (MySqlConnection connection = new MySqlConnection(ConnectionString))
-                {
-                    connection.Open();
-                    string query = $"SELECT id FROM users WHERE email = '{email}';";
+                using MySqlConnection connection = new(ConnectionString);
+                connection.Open();
+                string query = $"SELECT id FROM users WHERE email = '{email}';";
 
-                    using (MySqlCommand cmd = new MySqlCommand(query, connection))
-                    {
-                        return (int)cmd.ExecuteScalar();
-                    }
-                }
+                using MySqlCommand cmd = new(query, connection);
+                return (int)cmd.ExecuteScalar();
             }
             catch (Exception)
             {
                 MessageBox.Show("User not found. Please log in again.");
-                LoginWindow loginWindow = new LoginWindow();
+                LoginWindow loginWindow = new();
                 loginWindow.Show();
                 Close();
                 return 0;
@@ -100,8 +96,7 @@ namespace GameLauncher
 
                 while (await reader.ReadAsync())
                 {
-                    var mySqlReader = reader as MySqlDataReader;
-                    if (mySqlReader != null)
+                    if (reader is MySqlDataReader mySqlReader)
                     {
                         int playTime = LoadPlaytime(mySqlReader.GetInt32("id"));
                         double rating = LoadAverageRating(mySqlReader.GetInt32("id"));
@@ -125,19 +120,15 @@ namespace GameLauncher
         {
             try
             {
-                using (MySqlConnection connection = new MySqlConnection(ConnectionString))
-                {
-                    connection.Open();
+                using MySqlConnection connection = new(ConnectionString);
+                connection.Open();
 
-                    string query = @$"SELECT playtime.playtime_minutes FROM playtime 
+                string query = @$"SELECT playtime.playtime_minutes FROM playtime 
                                     INNER JOIN users ON playtime.user_id = users.id 
                                     WHERE users.id = {userId} AND game_id = {gameId};";
-                    using (MySqlCommand cmd = new MySqlCommand(query, connection))
-                    {
-                        var result = cmd.ExecuteScalar();
-                        return result != null ? Convert.ToInt32(result) : 0;
-                    }
-                }
+                using MySqlCommand cmd = new(query, connection);
+                var result = cmd.ExecuteScalar();
+                return result != null ? Convert.ToInt32(result) : 0;
             }
             catch (Exception)
             {
@@ -146,27 +137,23 @@ namespace GameLauncher
             }
         }
 
-        private double LoadAverageRating(int gameId)
+        private static double LoadAverageRating(int gameId)
         {
             try
             {
-                using (MySqlConnection connection = new MySqlConnection(ConnectionString))
+                using MySqlConnection connection = new(ConnectionString);
+                connection.Open();
+
+                string query = @$"SELECT AVG(rating) FROM reviews WHERE game_id = {gameId};";
+                using MySqlCommand cmd = new(query, connection);
+                var result = cmd.ExecuteScalar();
+
+                if (result == null || result == DBNull.Value)
                 {
-                    connection.Open();
-
-                    string query = @$"SELECT AVG(rating) FROM reviews WHERE game_id = {gameId};";
-                    using (MySqlCommand cmd = new MySqlCommand(query, connection))
-                    {
-                        var result = cmd.ExecuteScalar();
-
-                        if (result == null || result == DBNull.Value)
-                        {
-                            return 0.0;
-                        }
-
-                        return Convert.ToDouble(result);
-                    }
+                    return 0.0;
                 }
+
+                return Convert.ToDouble(result);
             }
             catch (Exception)
             {
@@ -223,7 +210,7 @@ namespace GameLauncher
             string zipPath = SelectDownloadDirectoryAsync(SelectedGame);
             if (zipPath == null) return;
 
-            string installPath = zipPath.Remove(zipPath.Length - 4);
+            string installPath = zipPath[..^4];
 
             try
             {
@@ -263,7 +250,6 @@ namespace GameLauncher
 
             if (folderDialog.ShowDialog() == true)
             {
-                var folderName = folderDialog.FolderName;
                 return Path.Combine(folderDialog.FolderName, $"{selectedGame.Name}.zip");
             }
 
@@ -277,7 +263,7 @@ namespace GameLauncher
             ExtractZip(zipPath, installPath);
         }
         //Fogalmam sincs hogy működikˇˇˇˇˇˇˇˇˇˇ
-        private async Task DownloadFileWithProgressAsync(string fileUrl, string destinationPath, IProgress<double> progress)
+        private static async Task DownloadFileWithProgressAsync(string fileUrl, string destinationPath, IProgress<double> progress)
         {
             using HttpClient client = new();
             using var response = await client.GetAsync(fileUrl, HttpCompletionOption.ResponseHeadersRead);
@@ -306,7 +292,7 @@ namespace GameLauncher
             }
         }
 
-        public void ExtractZip(string zipPath, string installPath)
+        public static void ExtractZip(string zipPath, string installPath)
         {
             EnsureDirectoryExists(installPath);
             ZipFile.ExtractToDirectory(zipPath, installPath);
@@ -322,14 +308,14 @@ namespace GameLauncher
                 if (File.Exists(InstalledGamesFilePath))
                 {
                     var json = File.ReadAllText(InstalledGamesFilePath);
-                    return JsonSerializer.Deserialize<List<Game>>(json) ?? new List<Game>();
+                    return JsonSerializer.Deserialize<List<Game>>(json) ?? [];
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error loading game data: {ex.Message}");
             }
-            return new List<Game>();
+            return [];
         }
 
         private void SaveGameExecutables(List<Game> games)
@@ -361,7 +347,7 @@ namespace GameLauncher
         private void LogOutButton_Click(object sender, RoutedEventArgs e)
         {
             File.Delete(SettingsFile);
-            LoginWindow loginWindow = new LoginWindow();
+            LoginWindow loginWindow = new();
             loginWindow.Show();
             Close();
         }
@@ -379,7 +365,7 @@ namespace GameLauncher
                 {
                     try
                     {
-                        Process gameProcess = new Process
+                        Process gameProcess = new()
                         {
                             StartInfo = new ProcessStartInfo
                             {
@@ -391,7 +377,7 @@ namespace GameLauncher
 
                         gameStartTime = DateTime.Now;
 
-                        gameProcess.Exited += (s, args) => OnGameExit(SelectedGame.Name, SelectedGame.Id);
+                        gameProcess.Exited += (s, args) => OnGameExit(SelectedGame.Id);
                         gameProcess.Start();
                     }
                     catch (Exception ex)
@@ -406,7 +392,7 @@ namespace GameLauncher
             }
         }
 
-        private void OnGameExit(string gameName, int gameID)
+        private void OnGameExit(int gameID)
         {
             try
             {
@@ -426,31 +412,27 @@ namespace GameLauncher
             }
         }
 
-        private void SavePlaytimeToDatabase(int userId, int gameId, int minutesPlayed, DateTime lastPlayed)
+        private static void SavePlaytimeToDatabase(int userId, int gameId, int minutesPlayed, DateTime lastPlayed)
         {
             try
             {
-                using (MySqlConnection connection = new MySqlConnection(ConnectionString))
-                {
-                    connection.Open();
+                using MySqlConnection connection = new(ConnectionString);
+                connection.Open();
 
-                    string query = @"
+                string query = @"
                 INSERT INTO playtime (user_id, game_id, playtime_minutes, last_played)
                 VALUES (@UserId, @GameId, @MinutesPlayed, @LastPlayed)
                 ON DUPLICATE KEY UPDATE 
                 playtime_minutes = playtime_minutes + @MinutesPlayed,
                 last_played = @LastPlayed;";
 
-                    using (MySqlCommand cmd = new MySqlCommand(query, connection))
-                    {
-                        cmd.Parameters.AddWithValue("@UserId", userId);
-                        cmd.Parameters.AddWithValue("@GameId", gameId);
-                        cmd.Parameters.AddWithValue("@MinutesPlayed", minutesPlayed);
-                        cmd.Parameters.AddWithValue("@LastPlayed", lastPlayed);
+                using MySqlCommand cmd = new(query, connection);
+                cmd.Parameters.AddWithValue("@UserId", userId);
+                cmd.Parameters.AddWithValue("@GameId", gameId);
+                cmd.Parameters.AddWithValue("@MinutesPlayed", minutesPlayed);
+                cmd.Parameters.AddWithValue("@LastPlayed", lastPlayed);
 
-                        cmd.ExecuteNonQuery();
-                    }
-                }
+                cmd.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
@@ -465,7 +447,7 @@ namespace GameLauncher
             if (SelectedGame != null)
             {
                 DownloadButton.IsEnabled = !string.IsNullOrEmpty(SelectedGame.DownloadLink);
-                if (Executables.Where(x => x.Id == SelectedGame.Id).Count() > 0)
+                if (Executables.Where(x => x.Id == SelectedGame.Id).Any())
                 {
                     DownloadButton.IsEnabled = false;
                 }
@@ -507,7 +489,7 @@ namespace GameLauncher
                 {
                     try
                     {
-                        gameInfo.ExecutablePath = gameInfo.ExecutablePath.Remove(gameInfo.ExecutablePath.Length - gameInfo.ExeName.Length);
+                        gameInfo.ExecutablePath = gameInfo.ExecutablePath[..^gameInfo.ExeName.Length];
 
                         if (Directory.Exists(gameInfo.ExecutablePath))
                         {
@@ -540,29 +522,25 @@ namespace GameLauncher
         {
             try
             {
-                ObservableCollection<Review> reviews = new();
+                ObservableCollection<Review> reviews = [];
 
-                using (MySqlConnection connection = new MySqlConnection(ConnectionString))
+                using (MySqlConnection connection = new(ConnectionString))
                 {
                     connection.Open();
                     string query = $"SELECT * FROM reviews WHERE game_id = '{gameId}';";
 
-                    using (MySqlCommand cmd = new MySqlCommand(query, connection))
+                    using MySqlCommand cmd = new(query, connection);
+                    using MySqlDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
                     {
-                        using (MySqlDataReader reader = cmd.ExecuteReader())
-                        {
-                            while (reader.Read())
-                            {
-                                reviews.Add(new Review(
-                                    reader.GetInt32("user_id"),
-                                    GetUsername(reader.GetInt32("user_id")),
-                                    reader.GetInt32("rating"),
-                                    reader.GetString("review_title"),
-                                    reader.GetString("review_text"),
-                                    reader.GetInt32("user_id") == userId
-                                ));
-                            }
-                        }
+                        reviews.Add(new Review(
+                            reader.GetInt32("user_id"),
+                            GetUsername(reader.GetInt32("user_id")),
+                            reader.GetInt32("rating"),
+                            reader.GetString("review_title"),
+                            reader.GetString("review_text"),
+                            reader.GetInt32("user_id") == userId
+                        ));
                     }
                 }
                 return reviews;
@@ -574,20 +552,16 @@ namespace GameLauncher
             }
         }
 
-        private string GetUsername(int UserId)
+        private static string GetUsername(int UserId)
         {
             try
             {
-                using (MySqlConnection connection = new MySqlConnection(ConnectionString))
-                {
-                    connection.Open();
-                    string query = $"SELECT name FROM users WHERE id = '{UserId}';";
+                using MySqlConnection connection = new(ConnectionString);
+                connection.Open();
+                string query = $"SELECT name FROM users WHERE id = '{UserId}';";
 
-                    using (MySqlCommand cmd = new MySqlCommand(query, connection))
-                    {
-                        return cmd.ExecuteScalar().ToString();
-                    }
-                }
+                using MySqlCommand cmd = new(query, connection);
+                return cmd.ExecuteScalar().ToString();
             }
             catch (Exception)
             {
@@ -618,22 +592,20 @@ namespace GameLauncher
         {
             try
             {
-                using (MySqlConnection connection = new MySqlConnection(ConnectionString))
+                using (MySqlConnection connection = new(ConnectionString))
                 {
                     connection.Open();
                     string query = @"
                         INSERT INTO reviews (game_id, user_id, rating, review_title, review_text)
                         VALUES (@GameId, @UserId, @Rating, @Title, @Text)";
 
-                    using (MySqlCommand cmd = new MySqlCommand(query, connection))
-                    {
-                        cmd.Parameters.AddWithValue("@GameId", SelectedGame.Id);
-                        cmd.Parameters.AddWithValue("@UserId", userId);
-                        cmd.Parameters.AddWithValue("@Rating", sldrRating.Value);
-                        cmd.Parameters.AddWithValue("@Title", txbTitle.Text);
-                        cmd.Parameters.AddWithValue("@Text", txbContent.Text);
-                        cmd.ExecuteNonQuery();
-                    }
+                    using MySqlCommand cmd = new(query, connection);
+                    cmd.Parameters.AddWithValue("@GameId", SelectedGame.Id);
+                    cmd.Parameters.AddWithValue("@UserId", userId);
+                    cmd.Parameters.AddWithValue("@Rating", sldrRating.Value);
+                    cmd.Parameters.AddWithValue("@Title", txbTitle.Text);
+                    cmd.Parameters.AddWithValue("@Text", txbContent.Text);
+                    cmd.ExecuteNonQuery();
                 }
 
                 double rating = LoadAverageRating(SelectedGame.Id);
@@ -697,8 +669,7 @@ namespace GameLauncher
                 _selectedButton.ClearValue(FontWeightProperty);
             }
 
-            Button clickedButton = sender as Button;
-            if (clickedButton != null)
+            if (sender is Button clickedButton)
             {
                 clickedButton.Background = new SolidColorBrush(Colors.LightSlateGray);
                 clickedButton.Foreground = new SolidColorBrush(Colors.Black);

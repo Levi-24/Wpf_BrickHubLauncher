@@ -26,7 +26,7 @@ namespace GameLauncher
             {
                 try
                 {
-                    using StreamReader reader = new StreamReader(SettingsFile);
+                    using StreamReader reader = new (SettingsFile);
                     string fullSettings = reader.ReadToEnd();
                     string[] pieces = fullSettings.Split(';');
 
@@ -37,9 +37,9 @@ namespace GameLauncher
                     (string storedHash, string storedSalt) = GetStoredPasswordHashAndSalt(DBConnectionString, savedEmail);
                     if (storedHash == savedHash && storedSalt == savedSalt)
                     {
-                        MainWindow mainWindow = new MainWindow(savedEmail);
+                        MainWindow mainWindow = new (savedEmail);
                         mainWindow.Show();
-                        this.Close();
+                        Close();
                     }
                     chkRemember.IsChecked = true;
                 }
@@ -90,7 +90,7 @@ namespace GameLauncher
             {
                 if (chkRemember.IsChecked == true)
                 {
-                    using StreamWriter writer = new StreamWriter(SettingsFile);
+                    using StreamWriter writer = new (SettingsFile);
                     writer.Write(email + ";");
                     writer.Write(storedHash + ";");
                     writer.Write(storedSalt + ";");
@@ -100,7 +100,7 @@ namespace GameLauncher
                     File.Delete(SettingsFile);
                 }
 
-                MainWindow mainWindow = new MainWindow(email);
+                MainWindow mainWindow = new (email);
                 mainWindow.Show();
                 this.Close();
             }
@@ -115,22 +115,18 @@ namespace GameLauncher
             string storedHash = string.Empty;
             string storedSalt = string.Empty;
 
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            using (MySqlConnection conn = new (connectionString))
             {
                 conn.Open();
 
                 string query = "SELECT password_hash, salt FROM users WHERE email = @email";
-                using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                using MySqlCommand cmd = new(query, conn);
+                cmd.Parameters.AddWithValue("@email", email);
+                using MySqlDataReader reader = cmd.ExecuteReader();
+                if (reader.Read())
                 {
-                    cmd.Parameters.AddWithValue("@email", email);
-                    using (MySqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            storedHash = reader["password_hash"].ToString();
-                            storedSalt = reader["salt"].ToString();
-                        }
-                    }
+                    storedHash = reader["password_hash"].ToString();
+                    storedSalt = reader["salt"].ToString();
                 }
             }
 
@@ -144,20 +140,18 @@ namespace GameLauncher
                 byte[] salt = Convert.FromBase64String(storedSalt);
 
                 // Hash the entered password using the same salt and Argon2id
-                using (var argon2 = new Argon2id(Encoding.UTF8.GetBytes(enteredPassword)))
-                {
-                    argon2.Iterations = 4;
-                    argon2.MemorySize = 65536;
-                    argon2.DegreeOfParallelism = 8;
-                    argon2.Salt = salt;
+                using var argon2 = new Argon2id(Encoding.UTF8.GetBytes(enteredPassword));
+                argon2.Iterations = 4;
+                argon2.MemorySize = 65536;
+                argon2.DegreeOfParallelism = 8;
+                argon2.Salt = salt;
 
-                    // Generate the hash for the entered password
-                    byte[] enteredHashBytes = argon2.GetBytes(32);
+                // Generate the hash for the entered password
+                byte[] enteredHashBytes = argon2.GetBytes(32);
 
-                    // Compare the generated hash with the stored hash
-                    string enteredHashBase64 = Convert.ToBase64String(enteredHashBytes);
-                    return enteredHashBase64 == storedHash;
-                }
+                // Compare the generated hash with the stored hash
+                string enteredHashBase64 = Convert.ToBase64String(enteredHashBytes);
+                return enteredHashBase64 == storedHash;
             }
             catch (Exception)
             {
@@ -209,11 +203,11 @@ namespace GameLauncher
             }
         }
 
-        public bool EmailValidator(string emailAddress)
+        public static bool EmailValidator(string emailAddress)
         {
             try
             {
-                MailAddress m = new MailAddress(emailAddress);
+                MailAddress m = new(emailAddress);
 
                 return true;
             }
@@ -225,23 +219,21 @@ namespace GameLauncher
 
         static (string hashedPassword, string salt) HashPassword(string password)
         {
-            using (var argon2 = new Argon2id(Encoding.UTF8.GetBytes(password)))
-            {
-                // Set Argon2 parameters (tune these values based on your requirements)
-                argon2.Iterations = 4; // Number of iterations
-                argon2.MemorySize = 65536; // Memory cost (64 MB)
-                argon2.DegreeOfParallelism = 8; // Degree of parallelism (how many CPU cores)
-                argon2.Salt = GenerateRandomSalt(); // Salt generation
+            using var argon2 = new Argon2id(Encoding.UTF8.GetBytes(password));
+            // Set Argon2 parameters (tune these values based on your requirements)
+            argon2.Iterations = 4; // Number of iterations
+            argon2.MemorySize = 65536; // Memory cost (64 MB)
+            argon2.DegreeOfParallelism = 8; // Degree of parallelism (how many CPU cores)
+            argon2.Salt = GenerateRandomSalt(); // Salt generation
 
-                // Generate the hash
-                byte[] hashBytes = argon2.GetBytes(32); // 32-byte hash
+            // Generate the hash
+            byte[] hashBytes = argon2.GetBytes(32); // 32-byte hash
 
-                // Convert hash and salt to Base64 strings
-                string hashedPassword = Convert.ToBase64String(hashBytes);
-                string salt = Convert.ToBase64String(argon2.Salt);
+            // Convert hash and salt to Base64 strings
+            string hashedPassword = Convert.ToBase64String(hashBytes);
+            string salt = Convert.ToBase64String(argon2.Salt);
 
-                return (hashedPassword, salt);
-            }
+            return (hashedPassword, salt);
         }
 
         static byte[] GenerateRandomSalt()
@@ -253,23 +245,19 @@ namespace GameLauncher
 
         static void RegisterUserInDatabase(string connectionString, string name, string email, string passwordHash, string salt)
         {
-            List<string> emails = new List<string>();
+            List<string> emails = [];
 
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            using (MySqlConnection conn = new(connectionString))
             {
                 conn.Open();
 
                 string query = "SELECT email FROM users WHERE email = @email";
-                using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                using MySqlCommand cmd = new(query, conn);
+                cmd.Parameters.AddWithValue("@email", email);
+                using MySqlDataReader reader = cmd.ExecuteReader();
+                if (reader.Read())
                 {
-                    cmd.Parameters.AddWithValue("@email", email);
-                    using (MySqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            emails.Add(reader["email"].ToString());
-                        }
-                    }
+                    emails.Add(reader["email"].ToString());
                 }
             }
 
@@ -279,21 +267,17 @@ namespace GameLauncher
             }
             else
             {
-                using (MySqlConnection conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
+                using MySqlConnection conn = new(connectionString);
+                conn.Open();
 
-                    string query = "INSERT INTO users (name, email, password_hash, salt) VALUES (@name, @email, @password_hash, @salt)";
-                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@name", name);
-                        cmd.Parameters.AddWithValue("@email", email);
-                        cmd.Parameters.AddWithValue("@password_hash", passwordHash);
-                        cmd.Parameters.AddWithValue("@salt", salt);
+                string query = "INSERT INTO users (name, email, password_hash, salt) VALUES (@name, @email, @password_hash, @salt)";
+                using MySqlCommand cmd = new(query, conn);
+                cmd.Parameters.AddWithValue("@name", name);
+                cmd.Parameters.AddWithValue("@email", email);
+                cmd.Parameters.AddWithValue("@password_hash", passwordHash);
+                cmd.Parameters.AddWithValue("@salt", salt);
 
-                        cmd.ExecuteNonQuery();
-                    }
-                }
+                cmd.ExecuteNonQuery();
             }
         }
         #endregion
