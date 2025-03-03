@@ -30,14 +30,14 @@ namespace GameLauncher
                     string fullSettings = reader.ReadToEnd();
                     string[] pieces = fullSettings.Split(';');
 
-                    string savedName = pieces[0];
+                    string savedEmail = pieces[0];
                     string savedHash = pieces[1];
                     string savedSalt = pieces[2];
 
-                    (string storedHash, string storedSalt) = GetStoredPasswordHashAndSalt(DBConnectionString, savedName);
+                    (string storedHash, string storedSalt) = GetStoredPasswordHashAndSalt(DBConnectionString, savedEmail);
                     if (storedHash == savedHash && storedSalt == savedSalt)
                     {
-                        MainWindow mainWindow = new MainWindow(savedName);
+                        MainWindow mainWindow = new MainWindow(savedEmail);
                         mainWindow.Show();
                         this.Close();
                     }
@@ -60,8 +60,8 @@ namespace GameLauncher
                 txtPassAgain.Visibility = Visibility.Visible;
                 lblPassAgain.Visibility = Visibility.Visible;
                 chkRemember.Visibility = Visibility.Hidden;
-                lblEmail.Visibility = Visibility.Visible;
-                txtEmail.Visibility = Visibility.Visible;
+                lblName.Visibility = Visibility.Visible;
+                txtName.Visibility = Visibility.Visible;
             }
             else
             {
@@ -69,8 +69,8 @@ namespace GameLauncher
                 txtPassAgain.Visibility = Visibility.Hidden;
                 lblPassAgain.Visibility = Visibility.Hidden;
                 chkRemember.Visibility = Visibility.Visible;
-                lblEmail.Visibility = Visibility.Hidden;
-                txtEmail.Visibility = Visibility.Hidden;
+                lblName.Visibility = Visibility.Hidden;
+                txtName.Visibility = Visibility.Hidden;
             }
 
         }
@@ -79,10 +79,10 @@ namespace GameLauncher
         #region LogIn
         private void Login_Click(object sender, RoutedEventArgs e)
         {
-            string name = txtName.Text;
+            string email = txtEmail.Text;
             string enteredPassword = txtPassword.Password;
 
-            (string storedHash, string storedSalt) = GetStoredPasswordHashAndSalt(DBConnectionString, name);
+            (string storedHash, string storedSalt) = GetStoredPasswordHashAndSalt(DBConnectionString, email);
 
             bool isPasswordValid = VerifyPassword(enteredPassword, storedHash, storedSalt);
 
@@ -91,7 +91,7 @@ namespace GameLauncher
                 if (chkRemember.IsChecked == true)
                 {
                     using StreamWriter writer = new StreamWriter(SettingsFile);
-                    writer.Write(name + ";");
+                    writer.Write(email + ";");
                     writer.Write(storedHash + ";");
                     writer.Write(storedSalt + ";");
                 }
@@ -100,7 +100,7 @@ namespace GameLauncher
                     File.Delete(SettingsFile);
                 }
 
-                MainWindow mainWindow = new MainWindow(name);
+                MainWindow mainWindow = new MainWindow(email);
                 mainWindow.Show();
                 this.Close();
             }
@@ -110,7 +110,7 @@ namespace GameLauncher
             }
         }
 
-        static (string storedHash, string storedSalt) GetStoredPasswordHashAndSalt(string connectionString, string name)
+        static (string storedHash, string storedSalt) GetStoredPasswordHashAndSalt(string connectionString, string email)
         {
             string storedHash = string.Empty;
             string storedSalt = string.Empty;
@@ -119,10 +119,10 @@ namespace GameLauncher
             {
                 conn.Open();
 
-                string query = "SELECT password_hash, salt FROM users WHERE name = @name";
+                string query = "SELECT password_hash, salt FROM users WHERE email = @email";
                 using (MySqlCommand cmd = new MySqlCommand(query, conn))
                 {
-                    cmd.Parameters.AddWithValue("@name", name);
+                    cmd.Parameters.AddWithValue("@name", email);
                     using (MySqlDataReader reader = cmd.ExecuteReader())
                     {
                         if (reader.Read())
