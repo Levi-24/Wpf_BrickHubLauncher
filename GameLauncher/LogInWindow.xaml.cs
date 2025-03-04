@@ -10,7 +10,7 @@ namespace GameLauncher
 {
     public partial class LoginWindow : Window
     {
-        private const string DBConnectionString = "server=localhost;uid=root;pwd=;database=game_launcher";
+        private const string DBConnectionString = AppSettings.DatabaseConnectionString;
         private const string SettingsFile = "user.settings";
 
         public LoginWindow()
@@ -41,7 +41,7 @@ namespace GameLauncher
                         mainWindow.Show();
                         Close();
                     }
-                    chkRemember.IsChecked = true;
+                    RememberMeCheckbox.IsChecked = true;
                 }
                 catch (Exception)
                 {
@@ -52,23 +52,26 @@ namespace GameLauncher
 
         private void ToRegister_Click(object sender, RoutedEventArgs e)
         {
-            regBtn.IsEnabled = !regBtn.IsEnabled;
-            logBtn.IsEnabled = !logBtn.IsEnabled;
-            if (regBtn.IsEnabled)
+            RegisterButton.Visibility = RegisterButton.Visibility == Visibility.Visible ? Visibility.Hidden : Visibility.Visible;
+            LogInButton.Visibility = LogInButton.Visibility == Visibility.Visible ? Visibility.Hidden : Visibility.Visible;
+
+            if (RegisterButton.IsVisible)
             {
-                toRegBtn.Content = "To Log In";
-                txtPassAgain.Visibility = Visibility.Visible;
-                lblPassAgain.Visibility = Visibility.Visible;
-                chkRemember.Visibility = Visibility.Hidden;
+                Header.Text = "Register";
+                ToRegisterButton.Content = "To Log In";
+                txtPasswordAgain.Visibility = Visibility.Visible;
+                lblPasswordAgain.Visibility = Visibility.Visible;
+                RememberMeCheckbox.Visibility = Visibility.Hidden;
                 lblName.Visibility = Visibility.Visible;
                 txtName.Visibility = Visibility.Visible;
             }
             else
             {
-                toRegBtn.Content = "To Register";
-                txtPassAgain.Visibility = Visibility.Hidden;
-                lblPassAgain.Visibility = Visibility.Hidden;
-                chkRemember.Visibility = Visibility.Visible;
+                Header.Text = "Log In";
+                ToRegisterButton.Content = "To Register";
+                txtPasswordAgain.Visibility = Visibility.Hidden;
+                lblPasswordAgain.Visibility = Visibility.Hidden;
+                RememberMeCheckbox.Visibility = Visibility.Visible;
                 lblName.Visibility = Visibility.Hidden;
                 txtName.Visibility = Visibility.Hidden;
             }
@@ -88,7 +91,7 @@ namespace GameLauncher
 
             if (isPasswordValid)
             {
-                if (chkRemember.IsChecked == true)
+                if (RememberMeCheckbox.IsChecked == true)
                 {
                     using StreamWriter writer = new (SettingsFile);
                     writer.Write(email + ";");
@@ -167,7 +170,7 @@ namespace GameLauncher
             string name = txtName.Text;
             string email = txtEmail.Text;
             string password = txtPassword.Password.ToString();
-            string passwordAgain = txtPassAgain.Password.ToString();
+            string passwordAgain = txtPasswordAgain.Password.ToString();
 
             if (!string.IsNullOrEmpty(password) && !string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(email))
             {
@@ -178,14 +181,10 @@ namespace GameLauncher
                         (string hashedPassword, string salt) = HashPassword(password);
                         RegisterUserInDatabase(DBConnectionString, name, email, hashedPassword, salt);
 
+                        ToRegister_Click(sender, e);
                         txtPassword.Password = string.Empty;
-                        regBtn.IsEnabled = false;
-                        logBtn.IsEnabled = true;
-                        chkRemember.Visibility = Visibility.Visible;
-                        lblPassAgain.Visibility = Visibility.Hidden;
-                        txtPassAgain.Visibility = Visibility.Hidden;
-                        lblName.Visibility = Visibility.Hidden;
-                        txtName.Visibility = Visibility.Hidden;
+                        txtPasswordAgain.Password = string.Empty;
+                        txtName.Text = string.Empty;
                     }
                     else
                     {

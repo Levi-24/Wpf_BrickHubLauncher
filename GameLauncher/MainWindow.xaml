@@ -96,7 +96,6 @@
                     <Style TargetType="ListBoxItem">
                         <Setter Property="Background" Value="#333"/>
                         <Setter Property="Focusable" Value="False"/>
-                        <Setter Property="IsHitTestVisible" Value="False"/>
                         <Style.Triggers>
                             <Trigger Property="ItemsControl.AlternationIndex" Value="1">
                                 <Setter Property="Background" Value="#FF424242"/>
@@ -128,9 +127,8 @@
                         <DataTemplate.Resources>
                             <Style TargetType="Border">
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsCurrentUser}" Value="True">
-                                        <Setter Property="Background" Value="LightGreen"/>
-                                        <!-- Highlight color -->
+                                    <DataTrigger Binding="{Binding IsCurrentUser }" Value="True">
+                                        <Setter Property="Background" Value="Indigo"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>

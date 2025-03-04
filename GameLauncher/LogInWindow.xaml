@@ -3,28 +3,28 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Log In" Height="500" Width="500" Background="#1E1E1E" ResizeMode="NoResize">
     <Grid Height="434" Width="450">
-        <StackPanel Background="#252525" VerticalAlignment="Center">
-            <TextBlock Text="Login" Foreground="White" FontSize="18" FontWeight="Bold" Margin="10" TextAlignment="Center"/>
+        <StackPanel VerticalAlignment="Center">
+            <TextBlock x:Name="Header" Text="Login" Foreground="White" FontSize="18" FontWeight="Bold" Margin="10" TextAlignment="Center"/>
 
-            <Label x:Name="lblName" Content="Username" Visibility="Hidden" Foreground="White" FontSize="16" />
-            <TextBox Name="txtName" Visibility="Hidden" FontSize="16" Margin="0,5,0,10" Background="#333" Foreground="White" Padding="5"/>
+            <Label x:Name="lblName" Content="Username" Foreground="White" FontSize="16" Visibility="Hidden"/>
+            <TextBox x:Name="txtName" FontSize="16" Background="#333" Foreground="White" Padding="5" Visibility="Hidden"/>
 
-            <Label Content="Password" Foreground="White" FontSize="16" />
-            <PasswordBox Name="txtPassword" FontSize="16" Margin="0,5,0,10" Background="#333" Foreground="White" Padding="5"/>
+            <Label x:Name="lblEmail" Content="E-mail" Foreground="White" FontSize="16"/>
+            <TextBox x:Name="txtEmail" FontSize="16" Background="#333" Foreground="White" Padding="5"/>
 
-            <Label x:Name="lblPassAgain" Content="Password2" Visibility="Hidden" Foreground="White" FontSize="16" />
-            <PasswordBox x:Name="txtPassAgain" Visibility="Hidden" FontSize="16" Margin="0,5,0,10" Background="#333" Foreground="White" Padding="5"/>
+            <Label x:Name="lblPassword" Content="Password" Foreground="White" FontSize="16"/>
+            <PasswordBox Name="txtPassword" FontSize="16" Background="#333" Foreground="White" Padding="5"/>
 
-            <Label x:Name="lblEmail" Content="E-mail" Foreground="White" FontSize="16" />
-            <TextBox x:Name="txtEmail" FontSize="16" Margin="0,5,0,10" Background="#333" Foreground="White" Padding="5"/>
+            <Label x:Name="lblPasswordAgain" Content="Password again" Foreground="White" FontSize="16" Visibility="Hidden"/>
+            <PasswordBox x:Name="txtPasswordAgain" FontSize="16" Background="#333" Foreground="White" Padding="5" Visibility="Hidden"/>
 
-            <StackPanel Orientation="Horizontal">
-                <Button x:Name="logBtn" Content="Login" Click="Login_Click" Padding="10" Background="#33C63A" Foreground="Black" Margin="5" />
-                <Button x:Name="regBtn" Content="Register" Click="Register_Click" Padding="10" Background="#FF5733" Foreground="Black" Margin="5" IsEnabled="False" />
-                <Button x:Name="toRegBtn" Content="To Register" Click="ToRegister_Click" Padding="10" Background="#3A8DFF" Foreground="Black" Margin="5" />
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,10">
+                <Button x:Name="LogInButton" Content="Login" Click="Login_Click" Padding="10" Background="#33C63A" Foreground="Black" Margin="5"/>
+                <Button x:Name="ToRegisterButton" Content="To Register" Click="ToRegister_Click" Padding="10" Background="#3A8DFF" Foreground="Black" Margin="5"/>
+                <Button x:Name="RegisterButton" Content="Register" Click="Register_Click" Padding="10" Background="#FF5733" Foreground="Black" Margin="5" Visibility="Hidden"/>
             </StackPanel>
 
-            <CheckBox x:Name="chkRemember" Content="Remember me" Foreground="White" FontSize="16" Margin="5"/>
+            <CheckBox x:Name="RememberMeCheckbox" Content="Remember me" Foreground="White" FontSize="16" Margin="5"/>
         </StackPanel>
     </Grid>
 </Window>

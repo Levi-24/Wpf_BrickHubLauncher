@@ -9,7 +9,7 @@
         public string ReviewText { get; set; }
         public bool IsCurrentUser { get; set; }
 
-        public Review(int userId, string userName, int rating, string reviewTitle, string reviewText, bool isCurrentUser)
+        public Review( int userId, string userName, int rating, string reviewTitle, string reviewText, bool isCurrentUser)
         {
             UserId = userId;
             UserName = userName;

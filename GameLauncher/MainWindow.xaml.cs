@@ -517,6 +517,11 @@ namespace GameLauncher
             }
         }
 
+        private void DeleteReviewButton_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Törölted");
+        }
+
         #region Review
         private ObservableCollection<Review> LoadReviews(int gameId)
         {
