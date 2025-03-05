@@ -13,8 +13,8 @@
             <TextBox x:Name="txtEmail" FontSize="16" Background="#333" Foreground="White" Padding="5"/>
 
             <Label x:Name="lblPassword" Content="Password" Foreground="White" FontSize="16"/>
-            <PasswordBox Name="txtPassword" FontSize="16" Background="#333" Foreground="White" Padding="5" PasswordChanged="txtPasswordChanged"/>
-            <TextBox x:Name="txtShowPassword" FontSize="16" Background="#333" Foreground="White" Padding="5" Visibility="Collapsed" TextChanged="txtShowPasswordChanged"/>
+            <PasswordBox Name="txtPassword" FontSize="16" Background="#333" Foreground="White" Padding="5" PasswordChanged="TxtPasswordChanged"/>
+            <TextBox x:Name="txtShowPassword" FontSize="16" Background="#333" Foreground="White" Padding="5" Visibility="Collapsed" TextChanged="TxtShowPasswordChanged"/>
             
             <Label x:Name="lblPasswordAgain" Content="Password again" Foreground="White" FontSize="16" Visibility="Hidden"/>
             <PasswordBox x:Name="txtPasswordAgain" FontSize="16" Background="#333" Foreground="White" Padding="5" Visibility="Hidden"/>

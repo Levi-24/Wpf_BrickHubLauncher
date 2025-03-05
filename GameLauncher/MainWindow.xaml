@@ -51,7 +51,7 @@
                     <TextBlock x:Name="tbGameName" Text="Game Name" Style="{StaticResource GameTitleStyle}"/>
                     <TextBlock Text="Description:" Style="{StaticResource LabelStyle}"/>
                     <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="100">
-                        <TextBlock x:Name="GameDescription" TextWrapping="Wrap" Foreground="White" Margin="5"/>
+                        <TextBlock x:Name="tbGameDescription" TextWrapping="Wrap" Foreground="White" Margin="5"/>
                     </ScrollViewer>
                     <TextBlock Text="Release Date:" Style="{StaticResource LabelStyle}"/>
                     <TextBlock x:Name="tbReleaseDate" Foreground="White" Margin="5"/>
@@ -72,7 +72,7 @@
                 <Button x:Name="DownloadButton" Content="Download" Click="DownloadButton_Click" Style="{StaticResource ActionButtonStyle}" Background="#33C63A"/>
             </StackPanel>
 
-            <ProgressBar x:Name="ProgressBar" Minimum="0" Maximum="100" Grid.Row="2" Height="10" Visibility="Hidden" Background="#444" Margin="10"/>
+            <ProgressBar x:Name="ProgressBar" Minimum="0" Maximum="100" Grid.Row="2" Height="10" Background="#444" Margin="10"/>
         </Grid>
 
         <!-- Review Grid -->

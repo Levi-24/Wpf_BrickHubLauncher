@@ -25,12 +25,12 @@ namespace GameLauncher
         private readonly string ImageDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DownloadedImages");
         private readonly string GameDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DownloadedGames");
         private readonly string InstalledGamesFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "installedGames.json");
-        private const string SettingsFile = "user.settings";
-        //DB Connection
-        private const string ConnectionString = "Server=localhost;Database=game_launcher;Uid=root;Pwd=;";
+        private const string SettingsFile = AppSettings.SettingsFile;
+        private const string DBConnectionString = AppSettings.DatabaseConnectionString;
         //Variables
         private readonly int userId;
         private DateTime gameStartTime;
+        private bool isDownloadInProgress = false;
         //Selected Objects
         private Button _selectedButton;
         private Game _selectedGame;
@@ -61,7 +61,7 @@ namespace GameLauncher
         {
             try
             {
-                using MySqlConnection connection = new(ConnectionString);
+                using MySqlConnection connection = new(DBConnectionString);
                 connection.Open();
                 string query = $"SELECT id FROM users WHERE email = '{email}';";
 
@@ -89,7 +89,7 @@ namespace GameLauncher
                     FROM games g
                       JOIN members dev ON g.developer_id = dev.id
                       JOIN members pub ON g.publisher_id = pub.id";
-                using var conn = new MySqlConnection(ConnectionString);
+                using var conn = new MySqlConnection(DBConnectionString);
                 await conn.OpenAsync();
 
                 using var cmd = new MySqlCommand(query, conn);
@@ -121,7 +121,7 @@ namespace GameLauncher
         {
             try
             {
-                using MySqlConnection connection = new(ConnectionString);
+                using MySqlConnection connection = new(DBConnectionString);
                 connection.Open();
 
                 string query = @$"SELECT playtime.playtime_minutes FROM playtime 
@@ -142,7 +142,7 @@ namespace GameLauncher
         {
             try
             {
-                using MySqlConnection connection = new(ConnectionString);
+                using MySqlConnection connection = new(DBConnectionString);
                 connection.Open();
 
                 string query = @$"SELECT AVG(rating) FROM reviews WHERE game_id = {gameId};";
@@ -212,6 +212,12 @@ namespace GameLauncher
         #region Download & Install & Uninstall
         private async void DownloadButton_Click(object sender, RoutedEventArgs e)
         {
+            if (isDownloadInProgress)
+            {
+                MessageBox.Show("A download is already in progress. Please wait until it completes.");
+                return;
+            }
+
             EnsureDirectoryExists(GameDirectory);
             string zipPath = SelectDownloadDirectoryAsync(SelectedGame);
             if (zipPath == null) return;
@@ -220,6 +226,7 @@ namespace GameLauncher
 
             try
             {
+                isDownloadInProgress = true;
                 await DownloadAndInstallGameAsync(SelectedGame, zipPath, installPath);
                 SelectedGame.InstallPath = installPath;
 
@@ -231,12 +238,16 @@ namespace GameLauncher
                 SaveGameExecutables(gameInstallations);
 
                 MessageBox.Show("Download completed!");
-                DownloadButton.IsEnabled = false;
+                ProgressBar.Value = 0;
                 Executables = LoadGameExecutables();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"An error occurred: {ex.Message}");
+            }
+            finally
+            {
+                isDownloadInProgress = false;
             }
         }
 
@@ -264,9 +275,9 @@ namespace GameLauncher
 
         private async Task DownloadAndInstallGameAsync(Game game, string zipPath, string installPath)
         {
-            var progress = new Progress<double>(value => ProgressBar.Value = value);
-            await DownloadFileWithProgressAsync(game.DownloadLink, zipPath, progress);
-            ExtractZip(zipPath, installPath);
+                var progress = new Progress<double>(value => ProgressBar.Value = value);
+                await DownloadFileWithProgressAsync(game.DownloadLink, zipPath, progress);
+                ExtractZip(zipPath, installPath);
         }
         //Fogalmam sincs hogy működikˇˇˇˇˇˇˇˇˇˇ
         private static async Task DownloadFileWithProgressAsync(string fileUrl, string destinationPath, IProgress<double> progress)
@@ -332,6 +343,7 @@ namespace GameLauncher
 
                         MessageBox.Show("Game uninstalled successfully!");
                         DownloadButton.IsEnabled = true;
+                        DownloadButton.Content = "Download";
 
                         Executables = LoadGameExecutables();
                     }
@@ -469,7 +481,7 @@ namespace GameLauncher
         {
             try
             {
-                using MySqlConnection connection = new(ConnectionString);
+                using MySqlConnection connection = new(DBConnectionString);
                 connection.Open();
 
                 string query = @"
@@ -495,47 +507,15 @@ namespace GameLauncher
 
         #endregion
 
-        private void UpdateUIForSelectedGame()
-        {
-            if (SelectedGame != null)
-            {
-                DownloadButton.IsEnabled = !string.IsNullOrEmpty(SelectedGame.DownloadLink);
-                if (Executables.Where(x => x.Id == SelectedGame.Id).Any())
-                {
-                    DownloadButton.IsEnabled = false;
-                }
-                GameInfo.Visibility = Visibility.Visible;
-                tbReleaseDate.Text = SelectedGame.ReleaseDate.ToString("yyyy MMMM dd.");
-                tbGameName.Text = SelectedGame.Name;
-                tbDeveloper.Text = SelectedGame.DeveloperName;
-                tbPublisher.Text = SelectedGame.PublisherName;
-                DownloadButton.Visibility = Visibility.Visible;
-                LaunchButton.Visibility = Visibility.Visible;
-                ProgressBar.Visibility = Visibility.Visible;
-                ProgressBar.Value = 0;
-                GameDescription.Text = SelectedGame.Description;
-                tbRating.Text = $"{SelectedGame.Rating}/10";
-                tbPlaytime.Text = $"{SelectedGame.PlayTime} minutes";
-                GameImage.Source = new BitmapImage(new Uri(SelectedGame.LocalImagePath));
-                lblGameName.Text = SelectedGame.Name;
-                var loadedReviews = LoadReviews(SelectedGame.Id);
-                Reviews.Clear();
-                foreach (var review in loadedReviews)
-                {
-                    Reviews.Add(review);
-                }
-                lbxReviews.ItemsSource = Reviews;
-            }
-        }
-
         #region Review
         private ObservableCollection<Review> LoadReviews(int gameId)
         {
+            Reviews.Clear();
             try
             {
                 ObservableCollection<Review> reviews = [];
 
-                using (MySqlConnection connection = new(ConnectionString))
+                using (MySqlConnection connection = new(DBConnectionString))
                 {
                     connection.Open();
                     string query = $"SELECT * FROM reviews WHERE game_id = '{gameId}';";
@@ -567,7 +547,7 @@ namespace GameLauncher
         {
             try
             {
-                using MySqlConnection connection = new(ConnectionString);
+                using MySqlConnection connection = new(DBConnectionString);
                 connection.Open();
                 string query = $"SELECT name FROM users WHERE id = '{UserId}';";
 
@@ -603,7 +583,7 @@ namespace GameLauncher
         {
             try
             {
-                using (MySqlConnection connection = new(ConnectionString))
+                using (MySqlConnection connection = new(DBConnectionString))
                 {
                     connection.Open();
                     string query = @"
@@ -652,6 +632,53 @@ namespace GameLauncher
             UpdateUIForSelectedGame();
         }
 
+        private void UpdateUIForSelectedGame()
+        {
+            if (SelectedGame != null)
+            {
+                //Disable download button if there is no download link
+                if (string.IsNullOrEmpty(SelectedGame.DownloadLink))
+                {
+                    DownloadButton.IsEnabled = false;
+                    DownloadButton.Content = "Download Not Available";
+                }
+                else
+                {
+                    if (SelectedGame.IsDownloadLinkValid)
+                    {
+                        DownloadButton.IsEnabled = true;
+                        DownloadButton.Content = "Download";
+                    }
+                    //Disable download button if the link is not valid
+                    else
+                    {
+                        DownloadButton.IsEnabled = false;
+                        DownloadButton.Content = "Link Not Valid";
+                    }
+                }
+                //Disable download button if the game is already installed
+                if (Executables.Where(x => x.Id == SelectedGame.Id).Any())
+                {
+                    DownloadButton.IsEnabled = false;
+                    DownloadButton.Content = "Already Installed";
+                }
+                //Set selectedGame value for UI elements
+                lblGameName.Text = SelectedGame.Name;
+                tbReleaseDate.Text = SelectedGame.ReleaseDate.ToString("yyyy MMMM dd.");
+                tbGameName.Text = SelectedGame.Name;
+                tbDeveloper.Text = SelectedGame.DeveloperName;
+                tbPublisher.Text = SelectedGame.PublisherName;
+                tbGameDescription.Text = SelectedGame.Description;
+                tbRating.Text = $"{SelectedGame.Rating}/10";
+                tbPlaytime.Text = $"{SelectedGame.PlayTime} minutes";
+                GameImage.Source = new BitmapImage(new Uri(SelectedGame.LocalImagePath));
+                //Load reviews
+                Reviews = LoadReviews(SelectedGame.Id);
+                lbxReviews.ItemsSource = Reviews;
+            }
+        }
+
+
         private void ChangeReviewVisibility(object sender, RoutedEventArgs e)
         {
             ReviewGrid.Visibility = Visibility.Visible;
@@ -690,5 +717,17 @@ namespace GameLauncher
             }
         }
         #endregion
+
+        private void OnGameSelectionChanged(Game newGame)
+        {
+            if (isDownloadInProgress)
+            {
+                MessageBox.Show("Please wait until the current download is complete before selecting a new game.");
+                return;
+            }
+
+            SelectedGame = newGame;
+        }
+
     }
 }

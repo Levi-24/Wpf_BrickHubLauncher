@@ -11,7 +11,8 @@ namespace GameLauncher
     public partial class LoginWindow : Window
     {
         private const string DBConnectionString = AppSettings.DatabaseConnectionString;
-        private const string SettingsFile = "user.settings";
+        private const string SettingsFile = AppSettings.SettingsFile;
+        private bool isUpdating = false;
 
         public LoginWindow()
         {
@@ -79,6 +80,37 @@ namespace GameLauncher
             }
 
         }
+
+        private void TxtPasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (!isUpdating)
+            {
+                isUpdating = true;
+                txtShowPassword.Text = txtPassword.Password;
+                isUpdating = false;
+            }
+        }
+
+        private void TxtShowPasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (!isUpdating)
+            {
+                isUpdating = true;
+                txtPassword.Password = txtShowPassword.Text;
+                isUpdating = false;
+            }
+        }
+
+        private void CheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            txtShowPassword.Visibility = txtShowPassword.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+            txtPassword.Visibility = txtPassword.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+            if (txtShowPassword.Visibility == Visibility.Visible)
+            {
+                txtShowPassword.Text = txtPassword.Password;
+            }
+        }
+
         #endregion
 
         #region LogIn
@@ -283,37 +315,5 @@ namespace GameLauncher
         }
 
         #endregion
-
-        private bool isUpdating = false;
-
-        private void txtPasswordChanged(object sender, RoutedEventArgs e)
-        {
-            if (!isUpdating)
-            {
-                isUpdating = true;
-                txtShowPassword.Text = txtPassword.Password;
-                isUpdating = false;
-            }
-        }
-
-        private void txtShowPasswordChanged(object sender, RoutedEventArgs e)
-        {
-            if (!isUpdating)
-            {
-                isUpdating = true;
-                txtPassword.Password = txtShowPassword.Text;
-                isUpdating = false;
-            }
-        }
-
-        private void CheckBox_Checked(object sender, RoutedEventArgs e)
-        {
-            txtShowPassword.Visibility = txtShowPassword.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
-            txtPassword.Visibility = txtPassword.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
-            if (txtShowPassword.Visibility == Visibility.Visible)
-            {
-                txtShowPassword.Text = txtPassword.Password;
-            }
-        }
     }
 }
