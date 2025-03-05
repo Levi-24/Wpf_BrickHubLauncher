@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -167,7 +168,7 @@ namespace GameLauncher
             int id = reader.GetInt32("id");
             string name = reader.GetString("name");
             string exeName = reader.GetString("exe_name") + ".exe";
-            string description = reader.GetString("description");
+            string description = RemoveHTMLTags(reader.GetString("description"));
             string imageUrl = reader["image_path"] != DBNull.Value ? reader.GetString("image_path") : "https://i.postimg.cc/mDvhPW7C/NoImage.jpg";
             string downloadLink = reader["download_link"] != DBNull.Value ? reader.GetString("download_link") : null;
             string localImagePath = await DownloadImageAsync(imageUrl);
@@ -176,6 +177,11 @@ namespace GameLauncher
             string publisherName = reader.GetString("publisher_name");
 
             return new Game(id, name, exeName, description, imageUrl, downloadLink, localImagePath, releaseDate, developerName, publisherName, playTime, rating);
+        }
+
+        public static string RemoveHTMLTags(string text)
+        {
+            return Regex.Replace(text, "<.*?>", string.Empty);
         }
 
         private async Task<string> DownloadImageAsync(string url)
@@ -203,7 +209,7 @@ namespace GameLauncher
         }
         #endregion
 
-        #region Download & Install
+        #region Download & Install & Uninstall
         private async void DownloadButton_Click(object sender, RoutedEventArgs e)
         {
             EnsureDirectoryExists(GameDirectory);
@@ -298,6 +304,49 @@ namespace GameLauncher
             ZipFile.ExtractToDirectory(zipPath, installPath);
             File.Delete(zipPath);
         }
+
+        private void UninstallButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (MessageBox.Show("Are you sure you want to uninstall this game?", "Confirm Uninstall", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {
+                if (SelectedGame == null) return;
+
+                var gameInstallations = LoadGameExecutables();
+
+                var gameInfo = gameInstallations.FirstOrDefault(g => g.Id == SelectedGame.Id);
+
+                if (gameInfo != null)
+                {
+                    try
+                    {
+                        gameInfo.ExecutablePath = gameInfo.ExecutablePath[..^gameInfo.ExeName.Length];
+
+                        if (Directory.Exists(gameInfo.ExecutablePath))
+                        {
+                            Directory.Delete(gameInfo.ExecutablePath, true);
+                        }
+
+                        gameInstallations.Remove(gameInfo);
+
+                        SaveGameExecutables(gameInstallations);
+
+                        MessageBox.Show("Game uninstalled successfully!");
+                        DownloadButton.IsEnabled = true;
+
+                        Executables = LoadGameExecutables();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"An error occurred while uninstalling the game: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("The game is not found in the installed list.");
+                }
+            }
+        }
+
         #endregion
 
         #region EXE Handling
@@ -404,7 +453,11 @@ namespace GameLauncher
                 SavePlaytimeToDatabase(userId, gameID, minutesPlayed, lastPlayed);
                 int playTime = LoadPlaytime(gameID);
                 Games.First(g => g.Id == SelectedGame.Id).PlayTime = playTime;
-                //tbPlaytime.Text = $"{SelectedGame.PlayTime} minutes"; valami szar a threadekkel
+
+                Dispatcher.Invoke(() =>
+                {
+                    tbPlaytime.Text = $"{SelectedGame.PlayTime} minutes";
+                });
             }
             catch (Exception ex)
             {
@@ -473,53 +526,6 @@ namespace GameLauncher
                 }
                 lbxReviews.ItemsSource = Reviews;
             }
-        }
-
-        private void UninstallButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (MessageBox.Show("Are you sure you want to uninstall this game?", "Confirm Uninstall", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-            {
-                if (SelectedGame == null) return;
-
-                var gameInstallations = LoadGameExecutables();
-
-                var gameInfo = gameInstallations.FirstOrDefault(g => g.Id == SelectedGame.Id);
-
-                if (gameInfo != null)
-                {
-                    try
-                    {
-                        gameInfo.ExecutablePath = gameInfo.ExecutablePath[..^gameInfo.ExeName.Length];
-
-                        if (Directory.Exists(gameInfo.ExecutablePath))
-                        {
-                            Directory.Delete(gameInfo.ExecutablePath, true);
-                        }
-
-                        gameInstallations.Remove(gameInfo);
-
-                        SaveGameExecutables(gameInstallations);
-
-                        MessageBox.Show("Game uninstalled successfully!");
-                        DownloadButton.IsEnabled = true;
-
-                        Executables = LoadGameExecutables();
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"An error occurred while uninstalling the game: {ex.Message}");
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("The game is not found in the installed list.");
-                }
-            }
-        }
-
-        private void DeleteReviewButton_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Törölted");
         }
 
         #region Review

@@ -5,7 +5,6 @@ using System.Net.Mail;
 using System.Windows;
 using System.Text;
 using System.IO;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace GameLauncher
 {
