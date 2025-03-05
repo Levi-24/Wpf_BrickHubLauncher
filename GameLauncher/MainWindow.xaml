@@ -94,6 +94,7 @@
             <ListBox x:Name="lbxReviews" ItemsSource="{Binding Reviews}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" Background="#FF252525" Margin="25,100,25,25" Foreground="White" ScrollViewer.CanContentScroll="False" AlternationCount="2">
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem">
+                        <Setter Property="IsHitTestVisible" Value="False"/>
                         <Setter Property="Background" Value="#333"/>
                         <Setter Property="Focusable" Value="False"/>
                         <Style.Triggers>

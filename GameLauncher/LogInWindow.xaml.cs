@@ -5,6 +5,7 @@ using System.Net.Mail;
 using System.Windows;
 using System.Text;
 using System.IO;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace GameLauncher
 {
@@ -54,6 +55,8 @@ namespace GameLauncher
         {
             RegisterButton.Visibility = RegisterButton.Visibility == Visibility.Visible ? Visibility.Hidden : Visibility.Visible;
             LogInButton.Visibility = LogInButton.Visibility == Visibility.Visible ? Visibility.Hidden : Visibility.Visible;
+            ShowPasswordCheckbox.IsChecked = false;
+            txtPassword.Password = string.Empty;
 
             if (RegisterButton.IsVisible)
             {
@@ -279,6 +282,39 @@ namespace GameLauncher
                 cmd.ExecuteNonQuery();
             }
         }
+
         #endregion
+
+        private bool isUpdating = false;
+
+        private void txtPasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (!isUpdating)
+            {
+                isUpdating = true;
+                txtShowPassword.Text = txtPassword.Password;
+                isUpdating = false;
+            }
+        }
+
+        private void txtShowPasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (!isUpdating)
+            {
+                isUpdating = true;
+                txtPassword.Password = txtShowPassword.Text;
+                isUpdating = false;
+            }
+        }
+
+        private void CheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            txtShowPassword.Visibility = txtShowPassword.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+            txtPassword.Visibility = txtPassword.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+            if (txtShowPassword.Visibility == Visibility.Visible)
+            {
+                txtShowPassword.Text = txtPassword.Password;
+            }
+        }
     }
 }
