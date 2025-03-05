@@ -30,7 +30,6 @@ namespace GameLauncher
         //Variables
         private readonly int userId;
         private DateTime gameStartTime;
-        private bool isDownloadInProgress = false;
         //Selected Objects
         private Button _selectedButton;
         private Game _selectedGame;
@@ -212,11 +211,7 @@ namespace GameLauncher
         #region Download & Install & Uninstall
         private async void DownloadButton_Click(object sender, RoutedEventArgs e)
         {
-            if (isDownloadInProgress)
-            {
-                MessageBox.Show("A download is already in progress. Please wait until it completes.");
-                return;
-            }
+            GamesList.IsHitTestVisible = false;
 
             EnsureDirectoryExists(GameDirectory);
             string zipPath = SelectDownloadDirectoryAsync(SelectedGame);
@@ -226,7 +221,6 @@ namespace GameLauncher
 
             try
             {
-                isDownloadInProgress = true;
                 await DownloadAndInstallGameAsync(SelectedGame, zipPath, installPath);
                 SelectedGame.InstallPath = installPath;
 
@@ -238,6 +232,8 @@ namespace GameLauncher
                 SaveGameExecutables(gameInstallations);
 
                 MessageBox.Show("Download completed!");
+                DownloadButton.IsEnabled = false;
+                DownloadButton.Content = "Installed";
                 ProgressBar.Value = 0;
                 Executables = LoadGameExecutables();
             }
@@ -245,10 +241,7 @@ namespace GameLauncher
             {
                 MessageBox.Show($"An error occurred: {ex.Message}");
             }
-            finally
-            {
-                isDownloadInProgress = false;
-            }
+            GamesList.IsHitTestVisible = true;
         }
 
         private static void EnsureDirectoryExists(string directoryPath)
@@ -653,14 +646,14 @@ namespace GameLauncher
                     else
                     {
                         DownloadButton.IsEnabled = false;
-                        DownloadButton.Content = "Link Not Valid";
+                        DownloadButton.Content = "Download Link Not Valid";
                     }
                 }
                 //Disable download button if the game is already installed
                 if (Executables.Where(x => x.Id == SelectedGame.Id).Any())
                 {
                     DownloadButton.IsEnabled = false;
-                    DownloadButton.Content = "Already Installed";
+                    DownloadButton.Content = "Installed";
                 }
                 //Set selectedGame value for UI elements
                 lblGameName.Text = SelectedGame.Name;
@@ -677,7 +670,6 @@ namespace GameLauncher
                 lbxReviews.ItemsSource = Reviews;
             }
         }
-
 
         private void ChangeReviewVisibility(object sender, RoutedEventArgs e)
         {
@@ -717,17 +709,5 @@ namespace GameLauncher
             }
         }
         #endregion
-
-        private void OnGameSelectionChanged(Game newGame)
-        {
-            if (isDownloadInProgress)
-            {
-                MessageBox.Show("Please wait until the current download is complete before selecting a new game.");
-                return;
-            }
-
-            SelectedGame = newGame;
-        }
-
     }
 }

@@ -137,9 +137,29 @@ namespace GameLauncher
                     File.Delete(SettingsFile);
                 }
 
-                MainWindow mainWindow = new (email);
+                this.Hide();
+                // Create and show the splash screen
+                SplashScreen splash = new SplashScreen();
+                MainWindow mainWindow = new(email);
+                splash.Show();
+
+                // Load the next window in a background task
+                Thread loadingThread = new Thread(() =>
+                {
+                    // Simulate loading time
+                    Thread.Sleep(5000); // Simulate loading
+
+                    // Switch back to the UI thread to show the dashboard window
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        splash.Close(); // Close the splash screen
+                        this.Close(); // Optionally close the main window
+                    });
+                });
                 mainWindow.Show();
-                this.Close();
+                // Set the thread apartment state to STA
+                loadingThread.SetApartmentState(ApartmentState.STA);
+                loadingThread.Start();
             }
             else
             {
