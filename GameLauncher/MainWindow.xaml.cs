@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
@@ -583,7 +584,7 @@ namespace GameLauncher
 
             try
             {
-                lblGameName.Text = SelectedGame.Name;
+                lblGameName.Text = SelectedGame.Name + " reviews:";
                 Reviews = LoadReviews(SelectedGame.Id);
                 lbxReviews.ItemsSource = Reviews;
             }
@@ -658,26 +659,20 @@ namespace GameLauncher
             if (SelectedGame != null)
             {
                 welcomeGrid.Visibility = Visibility.Collapsed;
-                LibraryGrid.Visibility = Visibility.Visible;
-                //Disable download button if there is no download link
-                if (string.IsNullOrEmpty(SelectedGame.DownloadLink))
+                if (ReviewGrid.Visibility != Visibility.Visible)
                 {
-                    DownloadButton.IsEnabled = false;
-                    DownloadButton.Content = "Download Not Available";
+                    LibraryGrid.Visibility = Visibility.Visible;
+                }
+                //Disable download button if there is no download link
+                if (SelectedGame.IsDownloadLinkValid)
+                {
+                    DownloadButton.IsEnabled = true;
+                    DownloadButton.Content = "Download";
                 }
                 else
                 {
-                    if (SelectedGame.IsDownloadLinkValid)
-                    {
-                        DownloadButton.IsEnabled = true;
-                        DownloadButton.Content = "Download";
-                    }
-                    //Disable download button if the link is not valid
-                    else
-                    {
-                        DownloadButton.IsEnabled = false;
-                        DownloadButton.Content = "Download Link Not Valid";
-                    }
+                    DownloadButton.IsEnabled = false;
+                    DownloadButton.Content = "Download Link Not Valid";
                 }
                 //Disable download button if the game is already installed
                 if (Executables.Where(x => x.Id == SelectedGame.Id).Any())
@@ -686,7 +681,7 @@ namespace GameLauncher
                     DownloadButton.Content = "Installed";
                 }
                 //Set selectedGame value for UI elements
-                lblGameName.Text = SelectedGame.Name;
+                lblGameName.Text = SelectedGame.Name + " reviews:";
                 tbReleaseDate.Text = SelectedGame.ReleaseDate.ToString("yyyy MMMM dd.");
                 tbGameName.Text = SelectedGame.Name;
                 tbDeveloper.Text = SelectedGame.DeveloperName;
@@ -781,6 +776,19 @@ namespace GameLauncher
             {
                 Debug.WriteLine($"Error validating link {url}: {ex.Message}");
                 return false;
+            }
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+
+        private void DragWindow(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                DragMove();
             }
         }
     }
