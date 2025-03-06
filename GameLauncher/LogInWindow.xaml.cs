@@ -22,7 +22,7 @@ namespace GameLauncher
         }
 
         #region General
-        private int GetCurrentId(string email)
+        private static int GetCurrentId(string email)
         {
             using (MySqlConnection idSelectionConn = new(DBConnectionString))
             {
@@ -53,27 +53,25 @@ namespace GameLauncher
                     bool isExpired;
                     bool isDevice;
 
-                    using (MySqlConnection conn = new(DBConnectionString))
+                    using MySqlConnection conn = new(DBConnectionString);
+                    conn.Open();
+
+                    string query = "SELECT device, token, expiry_date FROM tokens WHERE user_id = @user_id";
+                    using MySqlCommand cmd = new(query, conn);
+
+                    cmd.Parameters.AddWithValue("@user_id", currentId);
+                    using MySqlDataReader reader = cmd.ExecuteReader();
+
+                    if (reader.Read())
                     {
-                        conn.Open();
+                        isExpired = DateTime.TryParse(reader["expiry_date"].ToString(), out DateTime expiryDate) && expiryDate < DateTime.Now;
+                        isDevice = bool.TryParse(reader["device"].ToString(), out bool device);
 
-                        string query = "SELECT device, token, expiry_date FROM tokens WHERE user_id = @user_id";
-                        using MySqlCommand cmd = new(query, conn);
-
-                        cmd.Parameters.AddWithValue("@user_id", currentId);
-                        using MySqlDataReader reader = cmd.ExecuteReader();
-
-                        if (reader.Read())
+                        if (isDevice && reader["token"].ToString() == token && !isExpired)
                         {
-                            isExpired = DateTime.TryParse(reader["expiry_date"].ToString(), out DateTime expiryDate) && expiryDate < DateTime.Now;
-                            isDevice = bool.TryParse(reader["device"].ToString(), out bool device);
-
-                            if (isDevice && reader["token"].ToString() == token && !isExpired)
-                            {
-                                MainWindow mainWindow = new(email);
-                                mainWindow.Show();
-                                Close();
-                            }
+                            MainWindow mainWindow = new(email);
+                            mainWindow.Show();
+                            Close();
                         }
                     }
                 }
@@ -193,7 +191,7 @@ namespace GameLauncher
             }
         }
 
-        private (string storedHash, string storedSalt) GetStoredPasswordHashAndSalt(string connectionString, string email)
+        private static (string storedHash, string storedSalt) GetStoredPasswordHashAndSalt(string connectionString, string email)
         {
             string storedHash = string.Empty;
             string storedSalt = string.Empty;

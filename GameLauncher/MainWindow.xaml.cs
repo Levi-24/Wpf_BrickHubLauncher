@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
-using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -743,9 +742,11 @@ namespace GameLauncher
 
         private async Task LoadingScreenAsync()
         {
-            SplashScreen splash = new SplashScreen();
-            splash.Owner = this; // Set the owner to the main window
-            splash.WindowStartupLocation = WindowStartupLocation.CenterOwner; // Center it over the main window
+            SplashScreen splash = new()
+            {
+                Owner = this, // Set the owner to the main window
+                WindowStartupLocation = WindowStartupLocation.CenterOwner // Center it over the main window
+            };
             splash.Show();
             // Perform link validation asynchronously
             await ValidateDownloadLinksAsync();
