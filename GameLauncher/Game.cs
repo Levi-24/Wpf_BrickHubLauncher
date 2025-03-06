@@ -19,7 +19,7 @@ namespace GameLauncher
         public int PlayTime { get; set; }
         public double Rating { get; set; }
         public string ExecutablePath { get; set; }
-        public bool IsDownloadLinkValid { get; set; }
+        public bool IsDownloadLinkValid = true;
 
         //For storing game data in collection
         public Game(int id, string name, string exeName, string description, string imageUrl, string downloadLink, string localImagePath, DateTime releaseDate, string developerName, string publisherName, int playTime, double rating)
@@ -36,7 +36,6 @@ namespace GameLauncher
             PublisherName = publisherName;
             PlayTime = playTime;
             Rating = rating;
-            IsDownloadLinkValid = IsLinkValid(DownloadLink);
         }
 
         //For saving executable path in json file
@@ -46,21 +45,6 @@ namespace GameLauncher
             Id = id;
             ExeName = exeName;
             ExecutablePath = executablePath;
-        }
-
-        private static bool IsLinkValid(string url)
-        {
-            using HttpClient client = new();
-            try
-            {
-                // Make a HEAD request to check if the URL is valid
-                using var response = client.Send(new HttpRequestMessage(HttpMethod.Head, url));
-                return response.IsSuccessStatusCode;
-            }
-            catch
-            {
-                return false;
-            }
         }
     }
 }

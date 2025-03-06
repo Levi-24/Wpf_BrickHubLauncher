@@ -49,10 +49,17 @@ namespace GameLauncher
         public MainWindow(string email)
         {
             InitializeComponent();
-            LoadGamesAsync();
+            _ = InitializeAsync();
+            logoImage.Source = new BitmapImage(new Uri("pack://application:,,,/Resources/brickhubLogo.png"));
             userId = GetUserId(email);
-            Executables = LoadGameExecutables();
+        }
+
+        private async Task InitializeAsync()
+        {
+            await LoadGamesAsync();
             GamesList.ItemsSource = Games;
+            await LoadingScreenAsync();
+            Executables = LoadGameExecutables();
         }
 
         #region Start
@@ -78,16 +85,16 @@ namespace GameLauncher
             }
         }
 
-        private async void LoadGamesAsync()
+        private async Task LoadGamesAsync()
         {
             try
             {
                 var query = @"SELECT g.*, 
-                      dev.name AS developer_name, 
-                      pub.name AS publisher_name
-                    FROM games g
-                      JOIN members dev ON g.developer_id = dev.id
-                      JOIN members pub ON g.publisher_id = pub.id";
+              dev.name AS developer_name, 
+              pub.name AS publisher_name
+            FROM games g
+              JOIN members dev ON g.developer_id = dev.id
+              JOIN members pub ON g.publisher_id = pub.id";
                 using var conn = new MySqlConnection(DBConnectionString);
                 await conn.OpenAsync();
 
@@ -103,11 +110,6 @@ namespace GameLauncher
                         var game = await ParseGameAsync(mySqlReader, playTime, rating);
                         Games.Add(game);
                     }
-                }
-
-                if (Games.Count > 0)
-                {
-                    SelectedGame = Games[0];
                 }
             }
             catch (Exception ex)
@@ -268,9 +270,9 @@ namespace GameLauncher
 
         private async Task DownloadAndInstallGameAsync(Game game, string zipPath, string installPath)
         {
-                var progress = new Progress<double>(value => ProgressBar.Value = value);
-                await DownloadFileWithProgressAsync(game.DownloadLink, zipPath, progress);
-                ExtractZip(zipPath, installPath);
+            var progress = new Progress<double>(value => ProgressBar.Value = value);
+            await DownloadFileWithProgressAsync(game.DownloadLink, zipPath, progress);
+            ExtractZip(zipPath, installPath);
         }
         //Fogalmam sincs hogy működikˇˇˇˇˇˇˇˇˇˇ
         private static async Task DownloadFileWithProgressAsync(string fileUrl, string destinationPath, IProgress<double> progress)
@@ -556,6 +558,12 @@ namespace GameLauncher
 
         private void DisplayReviews(object sender, RoutedEventArgs e)
         {
+            if (SelectedGame == null)
+            {
+                MessageBox.Show("Please select a game first.");
+                return;
+            }
+
             Reviews.Clear();
             ChangeReviewVisibility(sender, e);
 
@@ -620,6 +628,12 @@ namespace GameLauncher
         #region UI
         private void ChangeLibraryVisibility(object sender, RoutedEventArgs e)
         {
+            if (SelectedGame == null)
+            {
+                MessageBox.Show("Please select a game first.");
+                return;
+            }
+
             LibraryGrid.Visibility = Visibility.Visible;
             ReviewGrid.Visibility = Visibility.Hidden;
             UpdateUIForSelectedGame();
@@ -629,6 +643,8 @@ namespace GameLauncher
         {
             if (SelectedGame != null)
             {
+                welcomeGrid.Visibility = Visibility.Collapsed;
+                LibraryGrid.Visibility = Visibility.Visible;
                 //Disable download button if there is no download link
                 if (string.IsNullOrEmpty(SelectedGame.DownloadLink))
                 {
@@ -709,5 +725,47 @@ namespace GameLauncher
             }
         }
         #endregion
+
+        private async Task LoadingScreenAsync()
+        {
+            SplashScreen splash = new SplashScreen();
+            splash.Owner = this; // Set the owner to the main window
+            splash.WindowStartupLocation = WindowStartupLocation.CenterOwner; // Center it over the main window
+            splash.Show();
+            // Perform link validation asynchronously
+            await ValidateDownloadLinksAsync();
+
+            // Close the splash screen on the UI thread
+            splash.Close();
+        }
+
+        private async Task ValidateDownloadLinksAsync()
+        {
+            foreach (var game in Games)
+            {
+                game.IsDownloadLinkValid = await IsLinkValidAsync(game.DownloadLink);
+            }
+        }
+
+        private static async Task<bool> IsLinkValidAsync(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                return false; // Treat empty or null URLs as invalid
+            }
+
+            using HttpClient client = new();
+            try
+            {
+                // Make a HEAD request to check if the URL is valid
+                using var response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, url));
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error validating link {url}: {ex.Message}");
+                return false;
+            }
+        }
     }
 }
