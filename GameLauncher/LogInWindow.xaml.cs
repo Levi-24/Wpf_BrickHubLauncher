@@ -11,8 +11,9 @@ namespace GameLauncher
     public partial class LoginWindow : Window
     {
         private const string DBConnectionString = AppSettings.DatabaseConnectionString;
-        private const string SettingsFile = AppSettings.SettingsFile;
+        private const string RememberMeTokenFile = AppSettings.RememberMeToken;
         private bool isUpdating = false;
+        private int currentId;
 
         public LoginWindow()
         {
@@ -21,31 +22,64 @@ namespace GameLauncher
         }
 
         #region General
+        private int GetCurrentId(string email)
+        {
+            using (MySqlConnection idSelectionConn = new(DBConnectionString))
+            {
+                idSelectionConn.Open();
+
+                string idSelectionQuery = "SELECT id FROM users WHERE email = @email";
+                using MySqlCommand idSelectionCmd = new(idSelectionQuery, idSelectionConn);
+                idSelectionCmd.Parameters.AddWithValue("@email", email);
+                using MySqlDataReader reader = idSelectionCmd.ExecuteReader();
+                if (reader.Read())
+                {
+                    return (int)reader["id"];
+                }
+            }
+            throw new InvalidOperationException("No user found with the specified email.");
+        }
+
         private void LoadUserSettings()
         {
-            if (File.Exists(SettingsFile))
+            if (File.Exists(RememberMeTokenFile))
             {
                 try
                 {
-                    using StreamReader reader = new (SettingsFile);
-                    string fullSettings = reader.ReadToEnd();
-                    string[] pieces = fullSettings.Split(';');
+                    var pieces = File.ReadAllText(RememberMeTokenFile).Split(';');
+                    string token = pieces[0];
+                    string email = Encoding.UTF8.GetString(Convert.FromBase64String(pieces[1]));
+                    currentId = GetCurrentId(email);
+                    bool isExpired;
+                    bool isDevice;
 
-                    string savedEmail = pieces[0];
-                    string savedHash = pieces[1];
-                    string savedSalt = pieces[2];
-
-                    (string storedHash, string storedSalt) = GetStoredPasswordHashAndSalt(DBConnectionString, savedEmail);
-                    if (storedHash == savedHash && storedSalt == savedSalt)
+                    using (MySqlConnection conn = new(DBConnectionString))
                     {
-                        MainWindow mainWindow = new (savedEmail);
-                        mainWindow.Show();
-                        Close();
+                        conn.Open();
+
+                        string query = "SELECT device, token, expiry_date FROM tokens WHERE user_id = @user_id";
+                        using MySqlCommand cmd = new(query, conn);
+
+                        cmd.Parameters.AddWithValue("@user_id", currentId);
+                        using MySqlDataReader reader = cmd.ExecuteReader();
+
+                        if (reader.Read())
+                        {
+                            isExpired = DateTime.TryParse(reader["expiry_date"].ToString(), out DateTime expiryDate) && expiryDate < DateTime.Now;
+                            isDevice = bool.TryParse(reader["device"].ToString(), out bool device);
+
+                            if (isDevice && reader["token"].ToString() == token && !isExpired)
+                            {
+                                MainWindow mainWindow = new(email);
+                                mainWindow.Show();
+                                Close();
+                            }
+                        }
                     }
-                    RememberMeCheckbox.IsChecked = true;
                 }
                 catch (Exception)
                 {
+                    MessageBox.Show("Error during the loading of the user settings!", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                     throw;
                 }
             }
@@ -101,6 +135,7 @@ namespace GameLauncher
             }
         }
 
+        //show password checkbox
         private void CheckBox_Checked(object sender, RoutedEventArgs e)
         {
             txtShowPassword.Visibility = txtShowPassword.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
@@ -118,23 +153,34 @@ namespace GameLauncher
         {
             string email = txtEmail.Text;
             string enteredPassword = txtPassword.Password;
+            currentId = GetCurrentId(email);
 
             (string storedHash, string storedSalt) = GetStoredPasswordHashAndSalt(DBConnectionString, email);
 
             bool isPasswordValid = VerifyPassword(enteredPassword, storedHash, storedSalt);
 
+            currentId = GetCurrentId(email);
+
             if (isPasswordValid)
             {
                 if (RememberMeCheckbox.IsChecked == true)
                 {
-                    using StreamWriter writer = new (SettingsFile);
-                    writer.Write(email + ";");
-                    writer.Write(storedHash + ";");
-                    writer.Write(storedSalt + ";");
-                }
-                else if (File.Exists(SettingsFile))
-                {
-                    File.Delete(SettingsFile);
+                    string token = Guid.NewGuid().ToString();
+                    DateTime expiryDate = DateTime.Now.AddDays(7);
+
+                    using MySqlConnection conn = new(DBConnectionString);
+                    conn.Open();
+
+                    string query = "INSERT INTO tokens (device, user_id, token, expiry_date) VALUES (@device, @user_id, @token, @expiry_date)";
+                    using MySqlCommand cmd = new(query, conn);
+                    cmd.Parameters.AddWithValue("@device", 1);
+                    cmd.Parameters.AddWithValue("@user_id", currentId);
+                    cmd.Parameters.AddWithValue("@token", token);
+                    cmd.Parameters.AddWithValue("@expiry_date", expiryDate);
+
+                    cmd.ExecuteNonQuery();
+
+                    File.WriteAllText(RememberMeTokenFile, token + ';' + Convert.ToBase64String(Encoding.UTF8.GetBytes(txtEmail.Text)));
                 }
 
                 MainWindow mainWindow = new(email);
@@ -147,7 +193,7 @@ namespace GameLauncher
             }
         }
 
-        static (string storedHash, string storedSalt) GetStoredPasswordHashAndSalt(string connectionString, string email)
+        private (string storedHash, string storedSalt) GetStoredPasswordHashAndSalt(string connectionString, string email)
         {
             string storedHash = string.Empty;
             string storedSalt = string.Empty;

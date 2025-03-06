@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -25,7 +26,7 @@ namespace GameLauncher
         private readonly string ImageDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DownloadedImages");
         private readonly string GameDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DownloadedGames");
         private readonly string InstalledGamesFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "installedGames.json");
-        private const string SettingsFile = AppSettings.SettingsFile;
+        private const string RememberMeTokenFile = AppSettings.RememberMeToken;
         private const string DBConnectionString = AppSettings.DatabaseConnectionString;
         //Variables
         private readonly int userId;
@@ -90,11 +91,11 @@ namespace GameLauncher
             try
             {
                 var query = @"SELECT g.*, 
-              dev.name AS developer_name, 
-              pub.name AS publisher_name
-            FROM games g
-              JOIN members dev ON g.developer_id = dev.id
-              JOIN members pub ON g.publisher_id = pub.id";
+                dev.name AS developer_name, 
+                pub.name AS publisher_name
+                FROM games g
+                JOIN members dev ON g.developer_id = dev.id
+                JOIN members pub ON g.publisher_id = pub.id";
                 using var conn = new MySqlConnection(DBConnectionString);
                 await conn.OpenAsync();
 
@@ -402,7 +403,21 @@ namespace GameLauncher
         #region Logout
         private void LogOutButton_Click(object sender, RoutedEventArgs e)
         {
-            File.Delete(SettingsFile);
+            if (File.Exists(RememberMeTokenFile))
+            {
+                var pieces = File.ReadAllText(RememberMeTokenFile).Split(';');
+                string token = pieces[0];
+
+                using MySqlConnection connection = new(DBConnectionString);
+                connection.Open();
+                string query = $"DELETE FROM tokens WHERE device = '1' AND token = '{token}';";
+
+                using MySqlCommand cmd = new(query, connection);
+                cmd.ExecuteScalar();
+
+                File.Delete(RememberMeTokenFile);
+            }
+
             LoginWindow loginWindow = new();
             loginWindow.Show();
             Close();
