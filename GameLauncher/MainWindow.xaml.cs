@@ -236,6 +236,8 @@ namespace GameLauncher
 
                 MessageBox.Show("Download completed!");
                 DownloadButton.IsEnabled = false;
+                LaunchButton.IsEnabled = true;
+                UninstallButton.IsEnabled = true;
                 DownloadButton.Content = "Installed";
                 ProgressBar.Value = 0;
                 Executables = LoadGameExecutables();
@@ -339,6 +341,8 @@ namespace GameLauncher
 
                         MessageBox.Show("Game uninstalled successfully!");
                         DownloadButton.IsEnabled = true;
+                        LaunchButton.IsEnabled = false;
+                        UninstallButton.IsEnabled = false;
                         DownloadButton.Content = "Download";
 
                         Executables = LoadGameExecutables();
@@ -431,6 +435,8 @@ namespace GameLauncher
             {
                 Executables = LoadGameExecutables();
                 var gameInfo = Executables.FirstOrDefault(g => g.Id == SelectedGame.Id);
+                LaunchButton.IsEnabled = false;
+                UninstallButton.IsEnabled = false;
 
                 if (gameInfo != null && File.Exists(gameInfo.ExecutablePath))
                 {
@@ -478,6 +484,8 @@ namespace GameLauncher
 
                 Dispatcher.Invoke(() =>
                 {
+                    LaunchButton.IsEnabled = true;
+                    UninstallButton.IsEnabled = true;
                     tbPlaytime.Text = $"{SelectedGame.PlayTime} minutes";
                 });
             }
@@ -667,6 +675,8 @@ namespace GameLauncher
                 if (SelectedGame.IsDownloadLinkValid)
                 {
                     DownloadButton.IsEnabled = true;
+                    UninstallButton.IsEnabled = false;
+                    LaunchButton.IsEnabled = false;
                     DownloadButton.Content = "Download";
                 }
                 else
@@ -678,6 +688,8 @@ namespace GameLauncher
                 if (Executables.Where(x => x.Id == SelectedGame.Id).Any())
                 {
                     DownloadButton.IsEnabled = false;
+                    UninstallButton.IsEnabled = true;
+                    LaunchButton.IsEnabled = true;
                     DownloadButton.Content = "Installed";
                 }
                 //Set selectedGame value for UI elements
