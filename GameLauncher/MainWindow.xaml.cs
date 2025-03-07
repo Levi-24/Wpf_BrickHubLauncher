@@ -61,6 +61,7 @@ namespace GameLauncher
             GamesList.ItemsSource = Games;
             await LoadingScreenAsync();
             Executables = LoadGameExecutables();
+            WindowState = WindowState.Normal;
         }
 
         #region Start
@@ -752,7 +753,6 @@ namespace GameLauncher
             SplashScreen splash = new()
             {
                 Owner = this, // Set the owner to the main window
-                WindowStartupLocation = WindowStartupLocation.CenterOwner // Center it over the main window
             };
             splash.Show();
             // Perform link validation asynchronously
