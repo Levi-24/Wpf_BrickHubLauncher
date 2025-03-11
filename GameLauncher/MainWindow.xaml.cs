@@ -23,10 +23,10 @@ namespace GameLauncher
         private ObservableCollection<Review> Reviews = [];
         private List<Game> Executables = [];
         //Directory / File Paths
-        private readonly string ImageDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DownloadedImages");
-        private readonly string GameDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DownloadedGames");
-        private readonly string InstalledGamesFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "installedGames.json");
-        private const string RememberMeTokenFile = AppSettings.RememberMeToken;
+        private readonly string ImageDirectory = AppSettings.ImageDirectory;
+        private readonly string GameDirectory = AppSettings.GameDirectory;
+        private readonly string InstalledGamesFilePath = AppSettings.InstalledGamesFilePath;
+        private readonly string RememberMeTokenFile = AppSettings.RememberMeToken;
         private const string DBConnectionString = AppSettings.DatabaseConnectionString;
         //Variables
         private readonly int userId;

@@ -10,8 +10,9 @@ namespace GameLauncher
 {
     public partial class LoginWindow : Window
     {
+
         private const string DBConnectionString = AppSettings.DatabaseConnectionString;
-        private const string RememberMeTokenFile = AppSettings.RememberMeToken;
+        private readonly string RememberMeTokenFile = AppSettings.RememberMeToken;
         private bool isUpdating = false;
         private int currentId;
 
