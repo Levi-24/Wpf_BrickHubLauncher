@@ -12,12 +12,12 @@
         <Grid Grid.ColumnSpan="2" Panel.ZIndex="1">
             <Image x:Name="favIcon" Margin="2" HorizontalAlignment="Left" Stretch="Uniform"/>
             <Border Background="Transparent" MouseDown="DragWindow" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
-            <Button Content="X" Foreground="Black" FontWeight="Bold"  VerticalAlignment="Center" HorizontalAlignment="Right" Width="30" Height="30" Background="Red" Click="CloseButton_Click"/>
+            <Button Content="X" Foreground="white" BorderBrush="#333" FontWeight="Bold"  VerticalAlignment="Center" HorizontalAlignment="Right" Width="30" Height="30" Background="#FF3E3E3E" Click="CloseButton_Click"/>
         </Grid>
         <Border Grid.Column="1" Background="#252525"/>
 
         <StackPanel VerticalAlignment="Center" Grid.Row="1" Margin="15">
-            <TextBlock x:Name="Header" Text="Login" Foreground="White" FontSize="18" FontWeight="Bold" Margin="10" TextAlignment="Center"/>
+            <TextBlock x:Name="Header" Text="Login" Foreground="White" FontSize="26" FontWeight="Bold" Margin="10" TextAlignment="Center"/>
 
             <Label x:Name="lblName" Content="Username" Foreground="White" FontSize="16" Visibility="Hidden"/>
             <TextBox x:Name="txtName" FontSize="16" Background="#333" Foreground="White" Padding="5" Visibility="Hidden"/>
@@ -41,9 +41,9 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <Button x:Name="LogInButton" HorizontalAlignment="Left" Content="Login" Click="Login_Click" Padding="10" Background="#33C63A" Foreground="Black" Margin="0,5,0,0" Grid.Row="0"/>
-                <Button x:Name="RegisterButton" HorizontalAlignment="Left" Content="Register" Click="Register_Click" Padding="10" Background="#FF5733" Foreground="Black" Margin="0,5,0,0" Grid.Row="0" Visibility="Collapsed"/>
-                <Button x:Name="ToRegisterButton" Content="To Register" Click="ToRegister_Click" Padding="10" Background="#3A8DFF" Foreground="Black" Margin="0,5,0,0" Grid.Row="0" HorizontalAlignment="Right"/>
+                <Button x:Name="LogInButton" HorizontalAlignment="Left" Content="Login" Click="Login_Click" Padding="10" Background="#33C63A" FontWeight="Bold" Foreground="Black" Margin="0,5,0,0" Grid.Row="0" FontSize="14"/>
+                <Button x:Name="RegisterButton" HorizontalAlignment="Left" Content="Register" Click="Register_Click" Padding="10" Background="#FF3333" FontWeight="Bold" Foreground="Black" Margin="0,5,0,0" Grid.Row="0" Visibility="Collapsed" FontSize="14"/>
+                <Button x:Name="ToRegisterButton" Content="To Register" Click="ToRegister_Click" Padding="10" Background="#3A8DFF" Foreground="Black" FontWeight="Bold" Margin="0,5,0,0" Grid.Row="0" HorizontalAlignment="Right" FontSize="14"/>
             </Grid>
 
             <CheckBox x:Name="RememberMeCheckbox" Content="Remember me" Foreground="White" FontSize="16" Margin="5"/>
