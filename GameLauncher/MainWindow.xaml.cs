@@ -398,7 +398,11 @@ namespace GameLauncher
 
                     using MySqlConnection connection = new(DBConnectionString);
                     connection.Open();
-                    string query = $"DELETE FROM tokens WHERE device = '1' AND token = '{token}';";
+
+                    //nem törli adatbázisból :(
+
+
+                    string query = $"DELETE FROM tokens WHERE device = 1 AND token = '{token}';";
 
                     using MySqlCommand cmd = new(query, connection);
                     cmd.ExecuteScalar();
