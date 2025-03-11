@@ -9,7 +9,9 @@
 
   <ItemGroup>
     <None Remove="Resources\brickhubLogo.png" />
+    <None Remove="Resources\closed.png" />
     <None Remove="Resources\Daydream.ttf" />
+    <None Remove="Resources\open.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -19,7 +21,9 @@
 
   <ItemGroup>
     <Resource Include="Resources\brickhubLogo.png" />
+    <Resource Include="Resources\closed.png" />
     <Resource Include="Resources\Daydream.ttf" />
+    <Resource Include="Resources\open.png" />
   </ItemGroup>
 
 </Project>

@@ -29,7 +29,7 @@ namespace GameLauncher
         private readonly string RememberMeTokenFile = AppSettings.RememberMeToken;
         private const string DBConnectionString = AppSettings.DatabaseConnectionString;
         //Variables
-        private readonly int userId;
+        private readonly int currentId;
         private DateTime gameStartTime;
         //Selected Objects
         private Button _selectedButton;
@@ -47,12 +47,12 @@ namespace GameLauncher
             }
         }
 
-        public MainWindow(string email)
+        public MainWindow(int loginId)
         {
             InitializeComponent();
             _ = InitializeAsync();
             logoImage.Source = new BitmapImage(new Uri("pack://application:,,,/Resources/brickhubLogo.png"));
-            userId = GetUserId(email);
+            currentId = loginId;
         }
 
         private async Task InitializeAsync()
@@ -65,27 +65,6 @@ namespace GameLauncher
         }
 
         #region Start
-        private int GetUserId(string email)
-        {
-            try
-            {
-                using MySqlConnection connection = new(DBConnectionString);
-                connection.Open();
-                string query = $"SELECT id FROM users WHERE email = '{email}';";
-
-                using MySqlCommand cmd = new(query, connection);
-                return (int)cmd.ExecuteScalar();
-            }
-            catch (Exception)
-            {
-                MessageBox.Show("User not found. Please log in again.");
-                LoginWindow loginWindow = new();
-                loginWindow.Show();
-                Close();
-                return 0;
-                throw;
-            }
-        }
 
         private async Task LoadGamesAsync()
         {
@@ -129,7 +108,7 @@ namespace GameLauncher
 
                 string query = @$"SELECT playtime.playtime_minutes FROM playtime 
                                     INNER JOIN users ON playtime.user_id = users.id 
-                                    WHERE users.id = {userId} AND game_id = {gameId};";
+                                    WHERE users.id = {currentId} AND game_id = {gameId};";
                 using MySqlCommand cmd = new(query, connection);
                 var result = cmd.ExecuteScalar();
                 return result != null ? Convert.ToInt32(result) : 0;
@@ -408,24 +387,33 @@ namespace GameLauncher
         #region Logout
         private void LogOutButton_Click(object sender, RoutedEventArgs e)
         {
-            if (File.Exists(RememberMeTokenFile))
+            var decision = MessageBox.Show("Are you sure you want to log out?", "Log out", MessageBoxButton.YesNo);
+            
+            if(decision == MessageBoxResult.Yes)
             {
-                var pieces = File.ReadAllText(RememberMeTokenFile).Split(';');
-                string token = pieces[0];
+                if (File.Exists(RememberMeTokenFile))
+                {
+                    var pieces = File.ReadAllText(RememberMeTokenFile).Split(';');
+                    string token = pieces[0];
 
-                using MySqlConnection connection = new(DBConnectionString);
-                connection.Open();
-                string query = $"DELETE FROM tokens WHERE device = '1' AND token = '{token}';";
+                    using MySqlConnection connection = new(DBConnectionString);
+                    connection.Open();
 
-                using MySqlCommand cmd = new(query, connection);
-                cmd.ExecuteScalar();
+                    //nem törli adatbázisból :(
 
-                File.Delete(RememberMeTokenFile);
+
+                    string query = $"DELETE FROM tokens WHERE device = 1 AND token = '{token}';";
+
+                    using MySqlCommand cmd = new(query, connection);
+                    cmd.ExecuteScalar();
+
+                    File.Delete(RememberMeTokenFile);
+                }
+
+                LoginWindow loginWindow = new();
+                loginWindow.Show();
+                Close();
             }
-
-            LoginWindow loginWindow = new();
-            loginWindow.Show();
-            Close();
         }
         #endregion
 
@@ -479,7 +467,7 @@ namespace GameLauncher
 
                 DateTime lastPlayed = DateTime.Now;
 
-                SavePlaytimeToDatabase(userId, gameID, minutesPlayed, lastPlayed);
+                SavePlaytimeToDatabase(currentId, gameID, minutesPlayed, lastPlayed);
                 int playTime = LoadPlaytime(gameID);
                 Games.First(g => g.Id == SelectedGame.Id).PlayTime = playTime;
 
@@ -549,7 +537,7 @@ namespace GameLauncher
                             reader.GetInt32("rating"),
                             reader.GetString("review_title"),
                             reader.GetString("review_text"),
-                            reader.GetInt32("user_id") == userId
+                            reader.GetInt32("user_id") == currentId
                         ));
                     }
                 }
@@ -617,7 +605,7 @@ namespace GameLauncher
 
                     using MySqlCommand cmd = new(query, connection);
                     cmd.Parameters.AddWithValue("@GameId", SelectedGame.Id);
-                    cmd.Parameters.AddWithValue("@UserId", userId);
+                    cmd.Parameters.AddWithValue("@UserId", currentId);
                     cmd.Parameters.AddWithValue("@Rating", sldrRating.Value);
                     cmd.Parameters.AddWithValue("@Title", txbTitle.Text);
                     cmd.Parameters.AddWithValue("@Text", txbContent.Text);
@@ -636,6 +624,7 @@ namespace GameLauncher
                 MessageBox.Show($"Database error: {ex.Message}");
             }
 
+            btnChange.Content = "Add Review";
             txbContent.Text = "Content";
             txbTitle.Text = "Title";
             sldrRating.Value = 1;
@@ -791,12 +780,12 @@ namespace GameLauncher
             }
         }
 
-        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        public void CloseButton_Click(object sender, RoutedEventArgs e)
         {
             Close();
         }
 
-        private void DragWindow(object sender, MouseButtonEventArgs e)
+        public void DragWindow(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left)
             {
