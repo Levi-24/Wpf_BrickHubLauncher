@@ -12,7 +12,12 @@
         <Grid Grid.ColumnSpan="2" Panel.ZIndex="1">
             <Image x:Name="favIcon" Margin="2" HorizontalAlignment="Left" Stretch="Uniform"/>
             <Border Background="Transparent" MouseDown="DragWindow" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
-            <Button Content="X" Foreground="white" BorderBrush="#333" FontWeight="Bold"  VerticalAlignment="Center" HorizontalAlignment="Right" Width="30" Height="30" Background="#FF3E3E3E" Click="CloseButton_Click"/>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Button Content="＿" Foreground="white" Margin="1" BorderBrush="#333" VerticalAlignment="Center" HorizontalAlignment="Right" Width="30" Height="30" Background="#FF3E3E3E" Click="MinimizeButton_Click"/>
+                <Button Content="⬜" Foreground="white" Margin="1" FontWeight="Black" BorderBrush="#333" VerticalAlignment="Center" HorizontalAlignment="Right" Width="30" Height="30" Background="#FF3E3E3E" Click="MaximizeButton_Click"/>
+                <Button Content="✖" Foreground="white" Margin="1" BorderBrush="#333" VerticalAlignment="Center" HorizontalAlignment="Right" Width="30" Height="30" Background="#FF3E3E3E" Click="CloseButton_Click"/>
+            </StackPanel>
         </Grid>
         <Border Grid.Column="1" Background="#252525"/>
 

@@ -60,6 +60,7 @@ namespace GameLauncher
             await LoadGamesAsync();
             GamesList.ItemsSource = Games;
             await LoadingScreenAsync();
+            Cursor = Cursors.Arrow;
             Executables = LoadGameExecutables();
             WindowState = WindowState.Normal;
         }
@@ -387,20 +388,17 @@ namespace GameLauncher
         #region Logout
         private void LogOutButton_Click(object sender, RoutedEventArgs e)
         {
-            var decision = MessageBox.Show("Are you sure you want to log out?", "Log out", MessageBoxButton.YesNo);
-            
-            if(decision == MessageBoxResult.Yes)
+            var decision = MessageBox.Show("Are you sure you want to log out?", "Log out", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            if (decision == MessageBoxResult.Yes)
             {
                 if (File.Exists(RememberMeTokenFile))
                 {
-                    var pieces = File.ReadAllText(RememberMeTokenFile).Split(';');
-                    string token = pieces[0];
+                    var pieces = File.ReadAllText(RememberMeTokenFile).Split('@');
+                    string token = pieces[1];
 
                     using MySqlConnection connection = new(DBConnectionString);
                     connection.Open();
-
-                    //nem törli adatbázisból :(
-
 
                     string query = $"DELETE FROM tokens WHERE device = 1 AND token = '{token}';";
 
@@ -780,6 +778,14 @@ namespace GameLauncher
             }
         }
 
+
+
+
+
+
+
+
+
         public void CloseButton_Click(object sender, RoutedEventArgs e)
         {
             Close();
@@ -791,6 +797,16 @@ namespace GameLauncher
             {
                 DragMove();
             }
+        }
+
+        public void MaximizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+        }
+
+        public void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            WindowState = WindowState.Minimized;
         }
     }
 }

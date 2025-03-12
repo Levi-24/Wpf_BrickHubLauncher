@@ -152,17 +152,27 @@ namespace GameLauncher
                 checkIcon.Source = new BitmapImage(new Uri("pack://application:,,,/Resources/closed.png"));
         }
 
-        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        public void CloseButton_Click(object sender, RoutedEventArgs e)
         {
             Close();
         }
 
-        private void DragWindow(object sender, MouseButtonEventArgs e)
+        public void DragWindow(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left)
             {
                 DragMove();
             }
+        }
+
+        public void MaximizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+        }
+
+        public void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            WindowState = WindowState.Minimized;
         }
         #endregion
 
@@ -290,7 +300,7 @@ namespace GameLauncher
                     {
                         (string hashedPassword, string salt) = HashPassword(password);
                         RegisterUserInDatabase(DBConnectionString, name, email, hashedPassword, salt);
-
+                        MessageBox.Show("Registration was successful!", "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
                         ToRegister_Click(sender, e);
                         txtPassword.Password = string.Empty;
                         txtPasswordAgain.Password = string.Empty;

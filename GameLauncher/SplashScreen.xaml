@@ -2,18 +2,30 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Loading..." Height="630" Width="1000" WindowStyle="None" 
-        AllowsTransparency="True" Background="#1E1E1E" Topmost="True" WindowStartupLocation="Manual" Left="150" Top="150">
+        AllowsTransparency="True" Background="#1E1E1E" Topmost="True">
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.ColumnSpan="2" Panel.ZIndex="1">
+            <TextBlock Text="BrickHub" VerticalAlignment="Center" FontFamily="pack://application:,,,/GameLauncher;component/Resources/#Daydream" FontSize="15" FontWeight="Bold" Foreground="#F9FFFA"/>
+            <Border Background="Transparent" MouseDown="DragWindow" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+            <Image x:Name="favIcon" Margin="2" HorizontalAlignment="Right" Stretch="Uniform"/>
+        </Grid>
+        <Border Grid.Column="1" Background="#252525"/>
         <TextBlock Text="Loading games, please wait..." 
                    Foreground="White"
                    HorizontalAlignment="Center" 
                    VerticalAlignment="Center" 
-                   FontSize="24" />
+                   FontSize="34" 
+                   Grid.Row="1"/>
         <ProgressBar IsIndeterminate="True" 
                      Background="#2E2E2E"
                      Foreground="White"
                      VerticalAlignment="Bottom" 
                      Height="20" 
-                     Margin="10"/>
+                     Margin="10"
+                     Grid.Row="1"/>
     </Grid>
 </Window>
