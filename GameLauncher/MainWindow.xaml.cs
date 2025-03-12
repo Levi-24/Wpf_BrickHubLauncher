@@ -18,20 +18,16 @@ namespace GameLauncher
 {
     public partial class MainWindow : Window
     {
-        //Collections
         private readonly ObservableCollection<Game> Games = [];
         private ObservableCollection<Review> Reviews = [];
         private List<Game> Executables = [];
-        //Directory / File Paths
         private readonly string ImageDirectory = AppSettings.ImageDirectory;
         private readonly string GameDirectory = AppSettings.GameDirectory;
         private readonly string InstalledGamesFilePath = AppSettings.InstalledGamesFilePath;
         private readonly string RememberMeTokenFile = AppSettings.RememberMeToken;
         private const string DBConnectionString = AppSettings.DatabaseConnectionString;
-        //Variables
         private readonly int currentId;
         private DateTime gameStartTime;
-        //Selected Objects
         private Button _selectedButton;
         private Game _selectedGame;
         private Game SelectedGame
@@ -55,6 +51,7 @@ namespace GameLauncher
             currentId = loginId;
         }
 
+        #region Start
         private async Task InitializeAsync()
         {
             await LoadGamesAsync();
@@ -65,18 +62,14 @@ namespace GameLauncher
             WindowState = WindowState.Normal;
         }
 
-        #region Start
-
         private async Task LoadGamesAsync()
         {
             try
             {
-                var query = @"SELECT g.*, 
-                dev.name AS developer_name, 
-                pub.name AS publisher_name
-                FROM games g
-                JOIN members dev ON g.developer_id = dev.id
-                JOIN members pub ON g.publisher_id = pub.id";
+                var query = @"SELECT g.*, dev.name AS developer_name, pub.name AS publisher_name
+                            FROM games g
+                            JOIN members dev ON g.developer_id = dev.id
+                            JOIN members pub ON g.publisher_id = pub.id";
                 using var conn = new MySqlConnection(DBConnectionString);
                 await conn.OpenAsync();
 
@@ -96,7 +89,7 @@ namespace GameLauncher
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading games: {ex.Message}");
+                MessageBox.Show($"Error while loading games: {ex.Message}", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -104,19 +97,19 @@ namespace GameLauncher
         {
             try
             {
-                using MySqlConnection connection = new(DBConnectionString);
-                connection.Open();
+                using MySqlConnection conn = new(DBConnectionString);
+                conn.Open();
 
                 string query = @$"SELECT playtime.playtime_minutes FROM playtime 
                                     INNER JOIN users ON playtime.user_id = users.id 
                                     WHERE users.id = {currentId} AND game_id = {gameId};";
-                using MySqlCommand cmd = new(query, connection);
+                using MySqlCommand cmd = new(query, conn);
                 var result = cmd.ExecuteScalar();
                 return result != null ? Convert.ToInt32(result) : 0;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                MessageBox.Show("Playtime ERROR!"); ;
+                MessageBox.Show($"Error while loading playtime: {ex.Message}", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                 throw;
             }
         }
@@ -125,23 +118,21 @@ namespace GameLauncher
         {
             try
             {
-                using MySqlConnection connection = new(DBConnectionString);
-                connection.Open();
+                using MySqlConnection conn = new(DBConnectionString);
+                conn.Open();
 
                 string query = @$"SELECT AVG(rating) FROM reviews WHERE game_id = {gameId};";
-                using MySqlCommand cmd = new(query, connection);
+                using MySqlCommand cmd = new(query, conn);
                 var result = cmd.ExecuteScalar();
 
                 if (result == null || result == DBNull.Value)
-                {
                     return 0.0;
-                }
 
                 return Convert.ToDouble(result);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                MessageBox.Show("Rating ERROR!"); ;
+                MessageBox.Show($"Error while loading ratings: {ex.Message}", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                 throw;
             }
         }
@@ -215,7 +206,7 @@ namespace GameLauncher
                 gameInstallations.Add(gameInstallationInfo);
                 SaveGameExecutables(gameInstallations);
 
-                MessageBox.Show("Download completed!");
+                MessageBox.Show("Download completed!", "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
                 DownloadButton.IsEnabled = false;
                 LaunchButton.IsEnabled = true;
                 UninstallButton.IsEnabled = true;
@@ -225,7 +216,7 @@ namespace GameLauncher
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"An error occurred: {ex.Message}");
+                MessageBox.Show($"An error occured: {ex.Message}", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             GamesList.IsHitTestVisible = true;
         }
@@ -258,7 +249,7 @@ namespace GameLauncher
             await DownloadFileWithProgressAsync(game.DownloadLink, zipPath, progress);
             ExtractZip(zipPath, installPath);
         }
-        //Fogalmam sincs hogy működikˇˇˇˇˇˇˇˇˇˇ
+
         private static async Task DownloadFileWithProgressAsync(string fileUrl, string destinationPath, IProgress<double> progress)
         {
             using HttpClient client = new();
@@ -320,7 +311,7 @@ namespace GameLauncher
 
                         SaveGameExecutables(gameInstallations);
 
-                        MessageBox.Show("Game uninstalled successfully!");
+                        MessageBox.Show("Game uninstalled successfully!", "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
                         DownloadButton.IsEnabled = true;
                         LaunchButton.IsEnabled = false;
                         UninstallButton.IsEnabled = false;
@@ -330,16 +321,15 @@ namespace GameLauncher
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"An error occurred while uninstalling the game: {ex.Message}");
+                        MessageBox.Show($"An error occurred while uninstalling the game: {ex.Message}", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
                 else
                 {
-                    MessageBox.Show("The game is not found in the installed list.");
+                    MessageBox.Show("The game is not found in the installed list.", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
-
         #endregion
 
         #region EXE Handling
@@ -355,7 +345,7 @@ namespace GameLauncher
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading game data: {ex.Message}");
+                MessageBox.Show($"Error while loading game executables: {ex.Message}", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             return [];
         }
@@ -376,11 +366,11 @@ namespace GameLauncher
             }
             catch (JsonException jsonEx)
             {
-                MessageBox.Show($"Error serializing game data: {jsonEx.Message}");
+                MessageBox.Show($"Error while serializing game data: {jsonEx.Message}", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saving game data: {ex.Message}");
+                MessageBox.Show($"Error while saving game executables: {ex.Message}", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
         #endregion
@@ -388,21 +378,19 @@ namespace GameLauncher
         #region Logout
         private void LogOutButton_Click(object sender, RoutedEventArgs e)
         {
-            var decision = MessageBox.Show("Are you sure you want to log out?", "Log out", MessageBoxButton.YesNo, MessageBoxImage.Question);
-
-            if (decision == MessageBoxResult.Yes)
+            if (MessageBox.Show("Are you sure you want to log out?", "Log out", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
             {
                 if (File.Exists(RememberMeTokenFile))
                 {
                     var pieces = File.ReadAllText(RememberMeTokenFile).Split('@');
                     string token = pieces[1];
 
-                    using MySqlConnection connection = new(DBConnectionString);
-                    connection.Open();
+                    using MySqlConnection conn = new(DBConnectionString);
+                    conn.Open();
 
                     string query = $"DELETE FROM tokens WHERE device = 1 AND token = '{token}';";
 
-                    using MySqlCommand cmd = new(query, connection);
+                    using MySqlCommand cmd = new(query, conn);
                     cmd.ExecuteScalar();
 
                     File.Delete(RememberMeTokenFile);
@@ -414,6 +402,12 @@ namespace GameLauncher
             }
         }
         #endregion
+
+
+        //Itt tartottál móóóóóó
+
+
+
 
         #region Launch & Playtime
         private void LaunchButton_Click(object sender, RoutedEventArgs e)
@@ -509,7 +503,6 @@ namespace GameLauncher
                 MessageBox.Show($"Database error: {ex.Message}");
             }
         }
-
         #endregion
 
         #region Review
