@@ -240,6 +240,7 @@ namespace GameLauncher
                 return Path.Combine(folderDialog.FolderName, $"{selectedGame.Name}.zip");
             }
 
+            GamesList.IsHitTestVisible = true;
             return null;
         }
 
@@ -662,6 +663,8 @@ namespace GameLauncher
                 }
                 else
                 {
+                    UninstallButton.IsEnabled = false;
+                    LaunchButton.IsEnabled = false;
                     DownloadButton.IsEnabled = false;
                     DownloadButton.Content = "Download Link Not Valid";
                 }

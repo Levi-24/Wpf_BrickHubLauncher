@@ -1,12 +1,10 @@
-﻿using Konscious.Security.Cryptography;
-using System.Security.Cryptography;
-using MySql.Data.MySqlClient;
+﻿using MySql.Data.MySqlClient;
 using System.Net.Mail;
 using System.Windows;
-using System.Text;
 using System.IO;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
+using Sodium;
 
 namespace GameLauncher
 {
@@ -195,8 +193,8 @@ namespace GameLauncher
                 return;
             }
 
-            (string storedHash, string storedSalt) = GetStoredPasswordHashAndSalt(email);
-            bool isPasswordValid = VerifyPassword(enteredPassword, storedHash, storedSalt);
+            string storedHash = GetStoredPasswordHash(email);
+            bool isPasswordValid = VerifyPassword(enteredPassword, storedHash);
 
             if (isPasswordValid)
             {
@@ -215,15 +213,14 @@ namespace GameLauncher
             }
         }
 
-        private static (string storedHash, string storedSalt) GetStoredPasswordHashAndSalt(string email)
+        private static string GetStoredPasswordHash(string email)
         {
             string storedHash = string.Empty;
-            string storedSalt = string.Empty;
 
             MySqlConnection conn = new(DBConnectionString);
             conn.Open();
 
-            string query = "SELECT password_hash, salt FROM users WHERE email = @email";
+            string query = "SELECT password_hash FROM users WHERE email = @email";
             using MySqlCommand cmd = new(query, conn);
             cmd.Parameters.AddWithValue("@email", email);
 
@@ -231,31 +228,16 @@ namespace GameLauncher
             if (reader.Read())
             {
                 storedHash = reader["password_hash"].ToString();
-                storedSalt = reader["salt"].ToString();
             }
 
-            return (storedHash, storedSalt);
+            return storedHash;
         }
 
-        static bool VerifyPassword(string enteredPassword, string storedHash, string storedSalt)
+        static bool VerifyPassword(string enteredPassword, string storedHash)
         {
             try
             {
-                byte[] salt = Convert.FromBase64String(storedSalt);
-
-                // Hash the entered password using the same salt and Argon2id
-                using var argon2 = new Argon2id(Encoding.UTF8.GetBytes(enteredPassword));
-                argon2.Iterations = 4;
-                argon2.MemorySize = 65536;
-                argon2.DegreeOfParallelism = 8;
-                argon2.Salt = salt;
-
-                // Generate the hash for the entered password
-                byte[] enteredHashBytes = argon2.GetBytes(32);
-
-                // Compare the generated hash with the stored hash
-                string enteredHashBase64 = Convert.ToBase64String(enteredHashBytes);
-                return enteredHashBase64 == storedHash;
+                return PasswordHash.ArgonHashStringVerify(storedHash, enteredPassword);
             }
             catch (Exception)
             {
@@ -298,8 +280,8 @@ namespace GameLauncher
                 {
                     if (EmailValidator(email))
                     {
-                        (string hashedPassword, string salt) = HashPassword(password);
-                        RegisterUserInDatabase(DBConnectionString, name, email, hashedPassword, salt);
+                        string hashedPassword = HashPassword(password);
+                        RegisterUserInDatabase(DBConnectionString, name, email, hashedPassword);
                         MessageBox.Show("Registration was successful!", "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
                         ToRegister_Click(sender, e);
                         txtPassword.Password = string.Empty;
@@ -335,33 +317,14 @@ namespace GameLauncher
             }
         }
 
-        static (string hashedPassword, string salt) HashPassword(string password)
+        static string HashPassword(string password)
         {
-            using var argon2 = new Argon2id(Encoding.UTF8.GetBytes(password));
-            // Set Argon2 parameters (tune these values based on your requirements)
-            argon2.Iterations = 4; // Number of iterations
-            argon2.MemorySize = 65536; // Memory cost (64 MB)
-            argon2.DegreeOfParallelism = 8; // Degree of parallelism (how many CPU cores)
-            argon2.Salt = GenerateRandomSalt(); // Salt generation
+            var hashedPassword = PasswordHash.ArgonHashString(password, PasswordHash.StrengthArgon.Medium);
 
-            // Generate the hash
-            byte[] hashBytes = argon2.GetBytes(32); // 32-byte hash
-
-            // Convert hash and salt to Base64 strings
-            string hashedPassword = Convert.ToBase64String(hashBytes);
-            string salt = Convert.ToBase64String(argon2.Salt);
-
-            return (hashedPassword, salt);
+            return hashedPassword;
         }
 
-        static byte[] GenerateRandomSalt()
-        {
-            byte[] salt = new byte[16];
-            RandomNumberGenerator.Fill(salt);
-            return salt;
-        }
-
-        static void RegisterUserInDatabase(string connectionString, string name, string email, string passwordHash, string salt)
+        static void RegisterUserInDatabase(string connectionString, string name, string email, string passwordHash)
         {
             List<string> emails = [];
 
@@ -388,12 +351,11 @@ namespace GameLauncher
                 using MySqlConnection conn = new(connectionString);
                 conn.Open();
 
-                string query = "INSERT INTO users (name, email, password_hash, salt) VALUES (@name, @email, @password_hash, @salt)";
+                string query = "INSERT INTO users (name, email, password_hash) VALUES (@name, @email, @password_hash)";
                 using MySqlCommand cmd = new(query, conn);
                 cmd.Parameters.AddWithValue("@name", name);
                 cmd.Parameters.AddWithValue("@email", email);
                 cmd.Parameters.AddWithValue("@password_hash", passwordHash);
-                cmd.Parameters.AddWithValue("@salt", salt);
 
                 cmd.ExecuteNonQuery();
             }
