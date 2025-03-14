@@ -16,7 +16,6 @@ namespace GameLauncher
 
         static AppSettings()
         {
-            // Ensure directories exist
             Directory.CreateDirectory(AppDataFolder);
             Directory.CreateDirectory(ImageDirectory);
             Directory.CreateDirectory(GameDirectory);

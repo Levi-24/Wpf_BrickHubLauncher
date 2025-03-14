@@ -46,6 +46,7 @@ namespace GameLauncher
         public MainWindow(int loginId)
         {
             InitializeComponent();
+            GetLatestArticle();
             _ = InitializeAsync();
             logoImage.Source = new BitmapImage(new Uri("pack://application:,,,/Resources/brickhubLogo.png"));
             currentId = loginId;
@@ -179,6 +180,32 @@ namespace GameLauncher
             catch
             {
                 return Path.Combine(ImageDirectory, "NoImage.jpg");
+            }
+        }
+
+        private async void GetLatestArticle()
+        {
+            var query = @"SELECT a.title, a.author, a.image, a.content, a.created_at, game.name AS game_name
+                          FROM articles a
+                          JOIN games game ON a.game_id = game.id 
+                          ORDER BY a.created_at DESC LIMIT 1;";
+            using var conn = new MySqlConnection(DBConnectionString);
+            await conn.OpenAsync();
+
+            using var cmd = new MySqlCommand(query, conn);
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                if (reader is MySqlDataReader mySqlReader)
+                {
+                    welcomeArticleImage.Source = new BitmapImage(new Uri(await DownloadImageAsync(reader["image"] != DBNull.Value ? reader.GetString("image") : "https://i.postimg.cc/mDvhPW7C/NoImage.jpg")));
+                    tbWelcomeTitle.Text = reader.GetString("title");
+                    tbWelcomeAuthor.Text = "Author: " + reader.GetString("author");
+                    tbWelcomeContent.Text = reader.GetString("content");
+                    tbWelcomeGameName.Text = reader.GetString("game_name");
+                    tbWelcomeDate.Text = reader.GetDateTime("created_at").ToString("yyyy. MM. dd.");
+                }
             }
         }
         #endregion
@@ -404,12 +431,6 @@ namespace GameLauncher
         }
         #endregion
 
-
-        //Itt tartottál móóóóóó
-
-
-
-
         #region Launch & Playtime
         private void LaunchButton_Click(object sender, RoutedEventArgs e)
         {
@@ -441,12 +462,12 @@ namespace GameLauncher
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Error launching the game: {ex.Message}");
+                        MessageBox.Show($"Error launching the game: {ex.Message}", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
                 else
                 {
-                    MessageBox.Show("Executable not found for the selected game.");
+                    MessageBox.Show("Executable not found for the selected game.", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
@@ -473,7 +494,7 @@ namespace GameLauncher
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error tracking playtime: {ex.Message}");
+                MessageBox.Show($"Error tracking playtime: {ex.Message}", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -501,7 +522,7 @@ namespace GameLauncher
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Database error: {ex.Message}");
+                MessageBox.Show($"Database error: {ex.Message}", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
         #endregion
@@ -514,12 +535,12 @@ namespace GameLauncher
             {
                 ObservableCollection<Review> reviews = [];
 
-                using (MySqlConnection connection = new(DBConnectionString))
+                using (MySqlConnection conn = new(DBConnectionString))
                 {
-                    connection.Open();
+                    conn.Open();
                     string query = $"SELECT * FROM reviews WHERE game_id = '{gameId}';";
 
-                    using MySqlCommand cmd = new(query, connection);
+                    using MySqlCommand cmd = new(query, conn);
                     using MySqlDataReader reader = cmd.ExecuteReader();
                     while (reader.Read())
                     {
@@ -535,9 +556,9 @@ namespace GameLauncher
                 }
                 return reviews;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                MessageBox.Show("Error while connecting to the database");
+                MessageBox.Show($"Error while connecting to the database: {ex.Message}", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                 throw;
             }
         }
@@ -546,16 +567,16 @@ namespace GameLauncher
         {
             try
             {
-                using MySqlConnection connection = new(DBConnectionString);
-                connection.Open();
+                using MySqlConnection conn = new(DBConnectionString);
+                conn.Open();
                 string query = $"SELECT name FROM users WHERE id = '{UserId}';";
 
-                using MySqlCommand cmd = new(query, connection);
+                using MySqlCommand cmd = new(query, conn);
                 return cmd.ExecuteScalar().ToString();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                MessageBox.Show("Error while connecting to the database");
+                MessageBox.Show($"Error while connecting to the database: {ex.Message}", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                 throw;
             }
         }
@@ -564,7 +585,7 @@ namespace GameLauncher
         {
             if (SelectedGame == null)
             {
-                MessageBox.Show("Please select a game first.");
+                MessageBox.Show("Please select a game first.", "Select a game!", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
@@ -577,9 +598,9 @@ namespace GameLauncher
                 Reviews = LoadReviews(SelectedGame.Id);
                 lbxReviews.ItemsSource = Reviews;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                MessageBox.Show("Error while loading reviews");
+                MessageBox.Show($"Error while loading reviews: {ex.Message}", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                 throw;
             }
         }
@@ -607,13 +628,13 @@ namespace GameLauncher
                 double rating = LoadAverageRating(SelectedGame.Id);
                 Games.First(g => g.Id == SelectedGame.Id).Rating = rating;
 
-                MessageBox.Show("Review submitted successfully");
+                MessageBox.Show("Review submitted successfully", "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
                 DisplayReviews(sender, e);
                 lbxReviews.Visibility = Visibility.Visible;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Database error: {ex.Message}");
+                MessageBox.Show($"Database error: {ex.Message}", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
             btnChange.Content = "Add Review";
@@ -635,7 +656,7 @@ namespace GameLauncher
         {
             if (SelectedGame == null)
             {
-                MessageBox.Show("Please select a game first.");
+                MessageBox.Show("Please select a game first.", "Select a game!", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
@@ -731,17 +752,15 @@ namespace GameLauncher
         }
         #endregion
 
+        #region LoadingScreen & Validation
         private async Task LoadingScreenAsync()
         {
             SplashScreen splash = new()
             {
-                Owner = this, // Set the owner to the main window
+                Owner = this,
             };
             splash.Show();
-            // Perform link validation asynchronously
             await ValidateDownloadLinksAsync();
-
-            // Close the splash screen on the UI thread
             splash.Close();
         }
 
@@ -757,13 +776,12 @@ namespace GameLauncher
         {
             if (string.IsNullOrWhiteSpace(url))
             {
-                return false; // Treat empty or null URLs as invalid
+                return false;
             }
 
             using HttpClient client = new();
             try
             {
-                // Make a HEAD request to check if the URL is valid
                 using var response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, url));
                 return response.IsSuccessStatusCode;
             }
@@ -773,15 +791,9 @@ namespace GameLauncher
                 return false;
             }
         }
+        #endregion
 
-
-
-
-
-
-
-
-
+        #region TitleBar
         public void CloseButton_Click(object sender, RoutedEventArgs e)
         {
             Close();
@@ -804,5 +816,6 @@ namespace GameLauncher
         {
             WindowState = WindowState.Minimized;
         }
+        #endregion
     }
 }

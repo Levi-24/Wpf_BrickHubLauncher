@@ -4,7 +4,7 @@
         Title="Log In" Height="500" Width="500" Background="#1E1E1E" ResizeMode="NoResize" WindowStyle="None">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="30"/>
+            <RowDefinition Height="40"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
@@ -21,6 +21,7 @@
         </Grid>
         <Border Grid.Column="1" Background="#252525"/>
 
+        <!-- Main Content -->
         <StackPanel VerticalAlignment="Center" Grid.Row="1" Margin="15">
             <TextBlock x:Name="Header" Text="Login" Foreground="White" FontSize="26" FontWeight="Bold" Margin="10" TextAlignment="Center"/>
 

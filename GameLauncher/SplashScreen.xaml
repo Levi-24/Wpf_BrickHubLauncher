@@ -5,10 +5,10 @@
         AllowsTransparency="True" Background="#1E1E1E" Topmost="True">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="30"/>
+            <RowDefinition Height="40"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Grid Grid.ColumnSpan="2" Panel.ZIndex="1">
+        <Grid Grid.ColumnSpan="2" Panel.ZIndex="1" Margin="10,0,0,0">
             <TextBlock Text="BrickHub" VerticalAlignment="Center" FontFamily="pack://application:,,,/GameLauncher;component/Resources/#Daydream" FontSize="15" FontWeight="Bold" Foreground="#F9FFFA"/>
             <Border Background="Transparent" MouseDown="DragWindow" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
             <Image x:Name="favIcon" Margin="2" HorizontalAlignment="Right" Stretch="Uniform"/>
