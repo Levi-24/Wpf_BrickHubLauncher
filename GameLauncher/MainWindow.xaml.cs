@@ -144,7 +144,7 @@ namespace GameLauncher
             string name = reader.GetString("name");
             string exeName = reader.GetString("exe_name") + ".exe";
             string description = RemoveHTMLTags(reader.GetString("description"));
-            string imageUrl = reader["image_path"] != DBNull.Value ? reader.GetString("image_path") : "https://i.postimg.cc/mDvhPW7C/NoImage.jpg";
+            string imageUrl = reader["image_path"] != DBNull.Value ? reader.GetString("image_path") : "https://i.postimg.cc/L6pL1Zkr/NoImage.png";
             string downloadLink = reader["download_link"] != DBNull.Value ? reader.GetString("download_link") : null;
             string localImagePath = await DownloadImageAsync(imageUrl);
             DateTime releaseDate = reader.GetDateTime("release_date");
@@ -179,7 +179,7 @@ namespace GameLauncher
             }
             catch
             {
-                return Path.Combine(ImageDirectory, "NoImage.jpg");
+                return Path.Combine(ImageDirectory, "NoImage.png");
             }
         }
 
@@ -199,7 +199,7 @@ namespace GameLauncher
             {
                 if (reader is MySqlDataReader mySqlReader)
                 {
-                    welcomeArticleImage.Source = new BitmapImage(new Uri(await DownloadImageAsync(reader["image"] != DBNull.Value ? reader.GetString("image") : "https://i.postimg.cc/mDvhPW7C/NoImage.jpg")));
+                    welcomeArticleImage.Source = new BitmapImage(new Uri(await DownloadImageAsync(reader["image"] != DBNull.Value ? reader.GetString("image") : "https://i.postimg.cc/L6pL1Zkr/NoImage.png")));
                     tbWelcomeTitle.Text = reader.GetString("title");
                     tbWelcomeAuthor.Text = "Author: " + reader.GetString("author");
                     tbWelcomeContent.Text = reader.GetString("content");

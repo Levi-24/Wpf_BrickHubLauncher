@@ -4,7 +4,7 @@ namespace GameLauncher
 {
     public static class AppSettings
     {
-        public const string DatabaseConnectionString = "database=game_launcher;server=localhost;uid=root;";
+        public const string DatabaseConnectionString = "database=brickhub;server=localhost;uid=root;";
 
         private static readonly string AppDataFolder = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BrickHub");
