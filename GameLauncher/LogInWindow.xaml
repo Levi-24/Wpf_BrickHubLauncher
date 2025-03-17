@@ -15,7 +15,6 @@
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                 <Button Content="＿" Foreground="white" Margin="1" BorderBrush="#333" VerticalAlignment="Center" HorizontalAlignment="Right" Width="30" Height="30" Background="#FF3E3E3E" Click="MinimizeButton_Click"/>
-                <Button Content="⬜" Foreground="white" Margin="1" FontWeight="Black" BorderBrush="#333" VerticalAlignment="Center" HorizontalAlignment="Right" Width="30" Height="30" Background="#FF3E3E3E" Click="MaximizeButton_Click"/>
                 <Button Content="✖" Foreground="white" Margin="1" BorderBrush="#333" VerticalAlignment="Center" HorizontalAlignment="Right" Width="30" Height="30" Background="#FF3E3E3E" Click="CloseButton_Click"/>
             </StackPanel>
         </Grid>

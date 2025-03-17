@@ -30,6 +30,7 @@ namespace GameLauncher
         private DateTime gameStartTime;
         private Button _selectedButton;
         private Game _selectedGame;
+        private bool isMaximized;
         private Game SelectedGame
         {
             get => _selectedGame;
@@ -48,7 +49,6 @@ namespace GameLauncher
             InitializeComponent();
             GetLatestArticle();
             _ = InitializeAsync();
-            logoImage.Source = new BitmapImage(new Uri("pack://application:,,,/Resources/brickhubLogo.png"));
             currentId = loginId;
         }
 
@@ -56,7 +56,7 @@ namespace GameLauncher
         private async Task InitializeAsync()
         {
             await LoadGamesAsync();
-            GamesList.ItemsSource = Games;
+            GamesList.ItemsSource = Games.OrderBy(x => x.Name);
             await LoadingScreenAsync();
             Cursor = Cursors.Arrow;
             Executables = LoadGameExecutables();
@@ -463,11 +463,15 @@ namespace GameLauncher
                     catch (Exception ex)
                     {
                         MessageBox.Show($"Error launching the game: {ex.Message}", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+                        LaunchButton.IsEnabled = true;
+                        UninstallButton.IsEnabled = true;
                     }
                 }
                 else
                 {
                     MessageBox.Show("Executable not found for the selected game.", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+                    LaunchButton.IsEnabled = true;
+                    UninstallButton.IsEnabled = true;
                 }
             }
         }
@@ -809,7 +813,22 @@ namespace GameLauncher
 
         public void MaximizeButton_Click(object sender, RoutedEventArgs e)
         {
-            WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+            if (isMaximized)
+            {
+                WindowState = WindowState.Normal;
+                Width = 1000;
+                Height = 630;
+            }
+            else
+            {
+                WindowState = WindowState.Normal;
+                Left = SystemParameters.WorkArea.Left;
+                Top = SystemParameters.WorkArea.Top;
+                Width = SystemParameters.WorkArea.Width;
+                Height = SystemParameters.WorkArea.Height;
+            }
+
+            isMaximized = !isMaximized;
         }
 
         public void MinimizeButton_Click(object sender, RoutedEventArgs e)

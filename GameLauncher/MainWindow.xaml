@@ -52,8 +52,7 @@
         <!-- Welcome Text -->
         <Grid Grid.Row="1" x:Name="welcomeGrid" Grid.Column="1">
             <Grid.RowDefinitions>
-                <RowDefinition Height="250"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="150"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
@@ -62,25 +61,24 @@
                 <ColumnDefinition Width="2*"/>
             </Grid.ColumnDefinitions>
 
-            <Image x:Name="logoImage" Stretch="Uniform" Grid.Row="0" Grid.ColumnSpan="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10"/>
 
-            <TextBlock Text="Welcome to Brickhub, please select a game, or read our latest article:" 
+            <TextBlock Text="Welcome to Brickhub!&#x0a; Please select a game, or read our latest article." 
                Foreground="White" FontSize="24" 
-               Grid.Row="1" Grid.ColumnSpan="2" 
+               Grid.Row="0" Grid.ColumnSpan="2" 
                VerticalAlignment="Center" HorizontalAlignment="Center" 
                TextAlignment="Center" Margin="10"/>
 
-            <Grid Grid.Row="2" HorizontalAlignment="Center" Grid.ColumnSpan="2" Margin="10">
+            <Grid Grid.Row="1" HorizontalAlignment="Center" Grid.ColumnSpan="2" Margin="10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
                 <Image x:Name="welcomeArticleImage" 
-               MaxHeight="250" 
-               MaxWidth="200" VerticalAlignment="Top" />
+               MaxHeight="350" 
+               MaxWidth="300" VerticalAlignment="center"/>
 
-                <StackPanel Grid.Column="1" Margin="10">
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10">
                     <TextBlock x:Name="tbWelcomeTitle" 
                        TextWrapping="Wrap" 
                        Text="" 
@@ -95,7 +93,7 @@
                        Foreground="LightGray" 
                        Margin="0,0,0,5"/>
 
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="100">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="200">
                         <TextBlock x:Name="tbWelcomeContent" 
                            TextWrapping="Wrap" 
                            Text="" 
@@ -135,7 +133,7 @@
 
                 <Image x:Name="GameImage" MaxWidth="350" MinWidth="250" MaxHeight="600" MinHeight="300" Stretch="Uniform" HorizontalAlignment="Center" Grid.Column="0"/>
 
-                <StackPanel x:Name="GameInfo" HorizontalAlignment="Stretch" MaxWidth="600" Grid.Column="1" VerticalAlignment="Center" Margin="10">
+                <StackPanel x:Name="GameInfo" HorizontalAlignment="Stretch" MaxWidth="1000" Grid.Column="1" VerticalAlignment="Center" Margin="10">
                     <TextBlock x:Name="tbGameName" Text="Game Name" Style="{StaticResource GameTitleStyle}" FontSize="24" TextAlignment="Center"/>
                     <TextBlock Text="Description:" Style="{StaticResource LabelStyle}"/>
                     <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="100">
