@@ -202,7 +202,7 @@ namespace GameLauncher
                     welcomeArticleImage.Source = new BitmapImage(new Uri(await DownloadImageAsync(reader["image"] != DBNull.Value ? reader.GetString("image") : "https://i.postimg.cc/L6pL1Zkr/NoImage.png")));
                     tbWelcomeTitle.Text = reader.GetString("title");
                     tbWelcomeAuthor.Text = "Author: " + reader.GetString("author");
-                    tbWelcomeContent.Text = reader.GetString("content");
+                    tbWelcomeContent.Text = RemoveHTMLTags(reader.GetString("content"));
                     tbWelcomeGameName.Text = reader.GetString("game_name");
                     tbWelcomeDate.Text = reader.GetDateTime("created_at").ToString("yyyy. MM. dd.");
                 }
@@ -703,7 +703,7 @@ namespace GameLauncher
                 }
                 //Set selectedGame value for UI elements
                 lblGameName.Text = SelectedGame.Name + " reviews:";
-                tbReleaseDate.Text = SelectedGame.ReleaseDate.ToString("yyyy MMMM dd.");
+                tbReleaseDate.Text = SelectedGame.ReleaseDate.ToString("yyyy MMMM dd");
                 tbGameName.Text = SelectedGame.Name;
                 tbDeveloper.Text = SelectedGame.DeveloperName;
                 tbPublisher.Text = SelectedGame.PublisherName;
