@@ -611,41 +611,48 @@ namespace GameLauncher
 
         private void SubmitReview(object sender, RoutedEventArgs e)
         {
-            try
+            if(txbTitle.Text != "" && txbContent.Text != "")
             {
-                using (MySqlConnection connection = new(DBConnectionString))
+                try
                 {
-                    connection.Open();
-                    string query = @"
+                    using (MySqlConnection connection = new(DBConnectionString))
+                    {
+                        connection.Open();
+                        string query = @"
                         INSERT INTO reviews (game_id, user_id, rating, review_title, review_text)
                         VALUES (@GameId, @UserId, @Rating, @Title, @Text)";
 
-                    using MySqlCommand cmd = new(query, connection);
-                    cmd.Parameters.AddWithValue("@GameId", SelectedGame.Id);
-                    cmd.Parameters.AddWithValue("@UserId", currentId);
-                    cmd.Parameters.AddWithValue("@Rating", sldrRating.Value);
-                    cmd.Parameters.AddWithValue("@Title", txbTitle.Text);
-                    cmd.Parameters.AddWithValue("@Text", txbContent.Text);
-                    cmd.ExecuteNonQuery();
+                        using MySqlCommand cmd = new(query, connection);
+                        cmd.Parameters.AddWithValue("@GameId", SelectedGame.Id);
+                        cmd.Parameters.AddWithValue("@UserId", currentId);
+                        cmd.Parameters.AddWithValue("@Rating", sldrRating.Value);
+                        cmd.Parameters.AddWithValue("@Title", txbTitle.Text);
+                        cmd.Parameters.AddWithValue("@Text", txbContent.Text);
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    double rating = LoadAverageRating(SelectedGame.Id);
+                    Games.First(g => g.Id == SelectedGame.Id).Rating = rating;
+
+                    MessageBox.Show("Review submitted successfully", "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
+                    DisplayReviews(sender, e);
+                    lbxReviews.Visibility = Visibility.Visible;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Database error: {ex.Message}", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
 
-                double rating = LoadAverageRating(SelectedGame.Id);
-                Games.First(g => g.Id == SelectedGame.Id).Rating = rating;
-
-                MessageBox.Show("Review submitted successfully", "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
-                DisplayReviews(sender, e);
-                lbxReviews.Visibility = Visibility.Visible;
+                btnChange.Content = "Add Review";
+                txbContent.Text = "Content";
+                txbTitle.Text = "Title";
+                sldrRating.Value = 1;
+                lblRating.Text = "1";
             }
-            catch (Exception ex)
+            else
             {
-                MessageBox.Show($"Database error: {ex.Message}", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Please fill in all fields.", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-
-            btnChange.Content = "Add Review";
-            txbContent.Text = "Content";
-            txbTitle.Text = "Title";
-            sldrRating.Value = 1;
-            lblRating.Text = "1";
         }
 
         private void SwitchReviewMode(object sender, RoutedEventArgs e)
