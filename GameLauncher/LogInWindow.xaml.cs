@@ -20,7 +20,6 @@ namespace GameLauncher
         public LoginWindow()
         {
             InitializeComponent();
-            favIcon.Source = new BitmapImage(new Uri("pack://application:,,,/Resources/brickhubLogo.png"));
             checkIcon.Source = new BitmapImage(new Uri("pack://application:,,,/Resources/closed.png"));
             LoadUserSettings();
         }

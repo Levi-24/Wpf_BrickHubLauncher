@@ -4,7 +4,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Game Launcher" Height="630" Width="1000" 
         Background="#2E2E2E" WindowState="Minimized" ResizeMode="NoResize" WindowStyle="None">
-
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="250"/>
@@ -17,21 +16,19 @@
 
         <!-- Title Bar -->
         <Grid Grid.ColumnSpan="2" Panel.ZIndex="1">
-            <Image x:Name="favIcon" Margin="2" HorizontalAlignment="Left" Stretch="Uniform"/>
-            <Border Background="Transparent" MouseDown="DragWindow" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+            <Border x:Name="DraggableBorder" MouseDown="DragWindow" Style="{StaticResource TitleBorderStyle}"/>
 
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                <Button Content="＿" Foreground="white" Margin="1" BorderBrush="#333" VerticalAlignment="Center" HorizontalAlignment="Right" Width="30" Height="30" Background="#FF3E3E3E" Click="MinimizeButton_Click"/>
-                <Button Content="⬜" Foreground="white" Margin="1" FontWeight="Black" BorderBrush="#333" VerticalAlignment="Center" HorizontalAlignment="Right" Width="30" Height="30" Background="#FF3E3E3E" Click="MaximizeButton_Click"/>
-                <Button Content="✖" Foreground="white" Margin="1" BorderBrush="#333" VerticalAlignment="Center" HorizontalAlignment="Right" Width="30" Height="30" Background="#FF3E3E3E" Click="CloseButton_Click"/>
+            <StackPanel Style="{StaticResource TitleBarStackpanelStyle}">
+                <Button Content="＿" Click="MinimizeButton_Click" Style="{StaticResource TitleBarButtonStyle}"/>
+                <Button Content="⬜" Click="MaximizeButton_Click" Style="{StaticResource TitleBarButtonStyle}"/>
+                <Button Content="✖" Click="CloseButton_Click" Style="{StaticResource TitleBarButtonStyle}"/>
             </StackPanel>
         </Grid>
-        <Border Grid.Column="1" Background="#252525"/>
+        <Border Background="#252525"/>
 
         <!-- Sidebar Navigation -->
-        <StackPanel Grid.RowSpan="2" Grid.Column="0" Background="#252525" Margin="0">
-            <TextBlock Text="BrickHub" FontFamily="pack://application:,,,/GameLauncher;component/Resources/#Daydream" Margin="10,5" FontSize="18" FontWeight="Bold" Foreground="#F9FFFA"/>
-
+        <StackPanel Grid.RowSpan="2" Grid.Column="0" Margin="0" Background="#252525">
+            <TextBlock Text="BrickHub" Margin="10" Style="{StaticResource LogoStyle}"/>
             <StackPanel>
                 <Button Content="Review" Click="DisplayReviews" Style="{StaticResource SidebarButtonStyle}"/>
                 <Button Content="Library" Click="ChangeLibraryVisibility" Style="{StaticResource SidebarButtonStyle}"/>
@@ -43,24 +40,22 @@
             <ItemsControl x:Name="GamesList" Margin="10,5" Background="#2A2A2A" ItemsSource="{Binding Games}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Button Content="{Binding Name}" Click="ChangeSelectedGameButton" Style="{StaticResource GameButtonStyle}"/>
+                        <Button Content="{Binding Name}" Style="{StaticResource GameButtonStyle}" Click="ChangeSelectedGameButton"/>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </StackPanel>
 
         <!-- Welcome Text -->
-        <Grid Grid.Row="1" x:Name="welcomeGrid" Grid.Column="1">
+        <Grid Grid.Row="1" x:Name="WelcomeGrid" Grid.Column="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="150"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="2*"/>
             </Grid.ColumnDefinitions>
-
 
             <TextBlock Text="Welcome to Brickhub!&#x0a; Please select a game, or read our latest article." 
                Foreground="White" FontSize="24" 
@@ -74,45 +69,16 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <Image x:Name="welcomeArticleImage" 
-               MaxHeight="350" 
-               MaxWidth="300" VerticalAlignment="center"/>
+                <Image x:Name="welcomeArticleImage" MaxHeight="350" MaxWidth="300" VerticalAlignment="center"/>
 
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10">
-                    <TextBlock x:Name="tbWelcomeTitle" 
-                       TextWrapping="Wrap" 
-                       Text="" 
-                       FontSize="20" 
-                       Foreground="White" 
-                       Margin="0,0,0,5"/>
-                    
-                    <TextBlock x:Name="tbWelcomeAuthor" 
-                       TextWrapping="Wrap" 
-                       Text="" 
-                       FontSize="16" 
-                       Foreground="LightGray" 
-                       Margin="0,0,0,5"/>
-
+                    <TextBlock x:Name="tbWelcomeTitle" Style="{StaticResource WelcomeTextStyle}" Foreground="White" FontSize="20"/>
+                    <TextBlock x:Name="tbWelcomeAuthor" Style="{StaticResource WelcomeTextStyle}"/>
                     <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="200">
-                        <TextBlock x:Name="tbWelcomeContent" 
-                           TextWrapping="Wrap" 
-                           Text="" 
-                           Foreground="White" 
-                           Margin="0,0,0,5"/>
+                        <TextBlock x:Name="tbWelcomeContent" Style="{StaticResource WelcomeTextStyle}" Foreground="White"/>
                     </ScrollViewer>
-
-                    <TextBlock x:Name="tbWelcomeGameName" 
-                       TextWrapping="Wrap" 
-                       Text="" 
-                       FontSize="16" 
-                       Foreground="LightGray" 
-                       Margin="0,0,0,5"/>
-
-                    <TextBlock x:Name="tbWelcomeDate" 
-                       TextWrapping="Wrap" 
-                       Text="" 
-                       FontSize="14" 
-                       Foreground="LightGray"/>
+                    <TextBlock x:Name="tbWelcomeGameName" Style="{StaticResource WelcomeTextStyle}"/>
+                    <TextBlock x:Name="tbWelcomeDate" Style="{StaticResource WelcomeTextStyle}"/>
                 </StackPanel>
             </Grid>
         </Grid>
@@ -124,7 +90,6 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-
             <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -135,20 +100,20 @@
 
                 <StackPanel x:Name="GameInfo" HorizontalAlignment="Stretch" MaxWidth="1000" Grid.Column="1" VerticalAlignment="Center" Margin="10">
                     <TextBlock x:Name="tbGameName" Text="Game Name" Style="{StaticResource GameTitleStyle}" FontSize="24" TextAlignment="Center"/>
-                    <TextBlock Text="Description:" Style="{StaticResource LabelStyle}"/>
+                    <TextBlock Text="Description:" Style="{StaticResource TextblockStyle}"/>
                     <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="100">
-                        <TextBlock x:Name="tbGameDescription" TextWrapping="Wrap" Foreground="White" Margin="5"/>
+                        <TextBlock x:Name="tbGameDescription" TextWrapping="Wrap" Style="{StaticResource AlternateTextblockStyle}"/>
                     </ScrollViewer>
-                    <TextBlock Text="Release Date:" Style="{StaticResource LabelStyle}"/>
-                    <TextBlock x:Name="tbReleaseDate" Foreground="White" Margin="5"/>
-                    <TextBlock Text="Developer:" Style="{StaticResource LabelStyle}"/>
-                    <TextBlock x:Name="tbDeveloper" Foreground="White" Margin="5"/>
-                    <TextBlock Text="Publisher:" Style="{StaticResource LabelStyle}"/>
-                    <TextBlock x:Name="tbPublisher" Foreground="White" Margin="5"/>
-                    <TextBlock Text="Your Playtime:" Style="{StaticResource LabelStyle}"/>
-                    <TextBlock x:Name="tbPlaytime" Foreground="White" Margin="5"/>
-                    <TextBlock Text="Overall Rating:" Style="{StaticResource LabelStyle}"/>
-                    <TextBlock x:Name="tbRating" Foreground="White" Margin="5"/>
+                    <TextBlock Text="Release Date:" Style="{StaticResource TextblockStyle}"/>
+                    <TextBlock x:Name="tbReleaseDate" Style="{StaticResource AlternateTextblockStyle}"/>
+                    <TextBlock Text="Developer:" Style="{StaticResource TextblockStyle}"/>
+                    <TextBlock x:Name="tbDeveloper" Style="{StaticResource AlternateTextblockStyle}"/>
+                    <TextBlock Text="Publisher:" Style="{StaticResource TextblockStyle}"/>
+                    <TextBlock x:Name="tbPublisher" Style="{StaticResource AlternateTextblockStyle}"/>
+                    <TextBlock Text="Your Playtime:" Style="{StaticResource TextblockStyle}"/>
+                    <TextBlock x:Name="tbPlaytime" Style="{StaticResource AlternateTextblockStyle}"/>
+                    <TextBlock Text="Overall Rating:" Style="{StaticResource TextblockStyle}"/>
+                    <TextBlock x:Name="tbRating" Style="{StaticResource AlternateTextblockStyle}"/>
                 </StackPanel>
             </Grid>
 
@@ -163,21 +128,38 @@
 
         <!-- Review Grid -->
         <Grid Grid.Row="1" x:Name="ReviewGrid" Visibility="Hidden" Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="10*"/>
+                <RowDefinition Height="10*"/>
+                <RowDefinition Height="10*"/>
+                <RowDefinition Height="5*"/>
+                <RowDefinition Height="65*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            
             <!-- Game Name -->
-            <TextBlock x:Name="lblGameName" Text="GameName" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="25,25,0,0" FontSize="20" Foreground="White"/>
+            <TextBlock x:Name="lblGameName" Grid.Column="0" Grid.Row="0" Text="GameName" FontSize="20" Foreground="White" Margin="20,0,0,0" VerticalAlignment="Center"/>
             <!-- Review Title -->
-            <TextBox x:Name="txbTitle" Margin="25,160,25,0" TextWrapping="Wrap" Text="Title" VerticalAlignment="Top" Height="43" FontSize="24" Grid.Column="1" Foreground="White" Background="#FF262525"/>
+            <TextBox x:Name="txbTitle" Grid.ColumnSpan="3" Grid.Row="2" Text="Title" FontSize="20" Foreground="White" Background="#FF262525" Margin="20,0,20,20"/>
             <!-- Review Content -->
-            <TextBox x:Name="txbContent" TextWrapping="Wrap" Text="Content" FontSize="18" Grid.Column="1" VerticalAlignment="Bottom" Margin="25,0,25,25" Height="300" Foreground="White" Background="#FF252525"/>
+            <TextBox x:Name="txbContent" Grid.ColumnSpan="3" Grid.Row="4" Text="Content" FontSize="20" Foreground="White" Background="#FF252525" Margin="20,20,20,20"/>
             <!-- Review Slider -->
-            <TextBlock x:Name="lblRatingText" Text="Rating (1-10)" HorizontalAlignment="Left" Margin="25,0,0,120" VerticalAlignment="Center" Grid.Column="1" Foreground="White"/>
-            <Slider x:Name="sldrRating" TickFrequency="1" IsSnapToTickEnabled="True" Value="1" Maximum="10" Minimum="1" HorizontalAlignment="Left" VerticalAlignment="Center" Width="119" ValueChanged="RatingSlider_ValueChanged" Grid.Column="1" Margin="125,0,0,120"/>
-            <TextBlock x:Name="lblRating" Text="1" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="1" Foreground="White" Margin="250,0,0,120"/>
+            <StackPanel Orientation="Horizontal" Grid.Row="3" Grid.ColumnSpan="2" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="20,0,0,0" >
+                <TextBlock x:Name="lblRatingText" Text="Rating (1-10)" Foreground="White"/>
+                <Slider x:Name="sldrRating" Width="120" TickFrequency="1" IsSnapToTickEnabled="True" Value="1" Maximum="10" Minimum="1" ValueChanged="RatingSlider_ValueChanged"/>
+                <TextBlock x:Name="lblRating" Text="1" Foreground="White"/>
+            </StackPanel>
             <!-- Review Buttons -->
-            <Button x:Name="btnChange" Content="Add Review" HorizontalAlignment="Right" VerticalAlignment="Top" Width="100" Height="50" Click="SwitchReviewMode" Grid.Column="1" Margin="25,25,25,25" Background="#FF333333" Foreground="White"/>
-            <Button x:Name="btnSubmit" Content="Submit" HorizontalAlignment="Right" VerticalAlignment="Top" Height="50" Width="100" Click="SubmitReview" Grid.Column="1" Margin="25,100,25,25" Background="#FF333333" Foreground="White"/>
+            <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" HorizontalAlignment="Right">
+                <Button x:Name="btnSubmit" Visibility="Hidden" Content="Submit" Height="50" Width="100" Click="SubmitReview" Background="#FF333333" Foreground="White" Margin="0,0,20,0"/>
+                <Button x:Name="btnChange" Content="Write A Review" Width="100" Height="50" Click="SwitchReviewMode" Background="#FF333333" Foreground="White" Margin="0,0,20,0"/>
+            </StackPanel>
 
-            <ListBox x:Name="lbxReviews" ItemsSource="{Binding Reviews}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" Background="#FF252525" Margin="25,100,25,25" Foreground="White" ScrollViewer.CanContentScroll="False" AlternationCount="2">
+            <ListBox Grid.Row="1" Grid.ColumnSpan="3" Grid.RowSpan="4" x:Name="lbxReviews" ItemsSource="{Binding Reviews}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" Background="#FF252525" Foreground="White" Margin="20" ScrollViewer.CanContentScroll="False" AlternationCount="2">
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem">
                         <Setter Property="IsHitTestVisible" Value="False"/>

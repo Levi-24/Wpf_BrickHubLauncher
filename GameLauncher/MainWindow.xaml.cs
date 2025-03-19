@@ -29,8 +29,8 @@ namespace GameLauncher
         private readonly int currentId;
         private DateTime gameStartTime;
         private Button _selectedButton;
-        private Game _selectedGame;
         private bool isMaximized;
+        private Game _selectedGame;
         private Game SelectedGame
         {
             get => _selectedGame;
@@ -55,6 +55,7 @@ namespace GameLauncher
         #region Start
         private async Task InitializeAsync()
         {
+            //await DownloadImageAsync("https://i.postimg.cc/L6pL1Zkr/NoImage.png");
             await LoadGamesAsync();
             GamesList.ItemsSource = Games.OrderBy(x => x.Name);
             await LoadingScreenAsync();
@@ -179,7 +180,7 @@ namespace GameLauncher
             }
             catch
             {
-                return Path.Combine(ImageDirectory, "NoImage.png");
+                return Path.Combine(Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.Parent.FullName, "Resources/NoImage.png");
             }
         }
 
@@ -658,7 +659,8 @@ namespace GameLauncher
         private void SwitchReviewMode(object sender, RoutedEventArgs e)
         {
             lbxReviews.Visibility = lbxReviews.Visibility == Visibility.Visible ? Visibility.Hidden : Visibility.Visible;
-            btnChange.Content = btnChange.Content.Equals("Add Review") ? "Show Reviews" : "Add Review";
+            btnSubmit.Visibility = btnSubmit.Visibility == Visibility.Visible ? Visibility.Hidden : Visibility.Visible;
+            btnChange.Content = btnChange.Content.Equals("Write A Review") ? "Show Reviews" : "Write A Review";
         }
         #endregion
 
@@ -680,7 +682,7 @@ namespace GameLauncher
         {
             if (SelectedGame != null)
             {
-                welcomeGrid.Visibility = Visibility.Collapsed;
+                WelcomeGrid.Visibility = Visibility.Collapsed;
                 if (ReviewGrid.Visibility != Visibility.Visible)
                 {
                     LibraryGrid.Visibility = Visibility.Visible;
@@ -710,7 +712,7 @@ namespace GameLauncher
                 }
                 //Set selectedGame value for UI elements
                 lblGameName.Text = SelectedGame.Name + " reviews:";
-                tbReleaseDate.Text = SelectedGame.ReleaseDate.ToString("yyyy MMMM dd");
+                tbReleaseDate.Text = SelectedGame.ReleaseDate.ToString("yyyy. MMMM. dd.");
                 tbGameName.Text = SelectedGame.Name;
                 tbDeveloper.Text = SelectedGame.DeveloperName;
                 tbPublisher.Text = SelectedGame.PublisherName;
@@ -822,12 +824,14 @@ namespace GameLauncher
         {
             if (isMaximized)
             {
+                DraggableBorder.IsHitTestVisible = true;
                 WindowState = WindowState.Normal;
                 Width = 1000;
                 Height = 630;
             }
             else
             {
+                DraggableBorder.IsHitTestVisible = false;
                 WindowState = WindowState.Normal;
                 Left = SystemParameters.WorkArea.Left;
                 Top = SystemParameters.WorkArea.Top;
