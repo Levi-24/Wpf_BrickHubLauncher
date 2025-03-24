@@ -7,7 +7,7 @@ namespace GameLauncher
         public const string DatabaseConnectionString = "database=brickhub;server=localhost;uid=root;";
 
         private static readonly string AppDataFolder = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BrickHub");
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "BrickHub");
 
         public static readonly string RememberMeToken = Path.Combine(AppDataFolder, "rememberMeToken.txt");
         public static readonly string ImageDirectory = Path.Combine(AppDataFolder, "DownloadedImages");

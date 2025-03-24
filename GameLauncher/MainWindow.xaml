@@ -15,7 +15,8 @@
         </Grid.RowDefinitions>
 
         <!-- Title Bar -->
-        <Grid Grid.ColumnSpan="2" Panel.ZIndex="1">
+        <Grid Background="#252525" Grid.ColumnSpan="2" Panel.ZIndex="1">
+            <TextBlock Text="BrickHub" Margin="10" Style="{StaticResource LogoStyle}"/>
             <Border x:Name="DraggableBorder" MouseDown="DragWindow" Style="{StaticResource TitleBorderStyle}"/>
 
             <StackPanel Style="{StaticResource TitleBarStackpanelStyle}">
@@ -24,11 +25,9 @@
                 <Button Content="✖" Click="CloseButton_Click" Style="{StaticResource TitleBarButtonStyle}"/>
             </StackPanel>
         </Grid>
-        <Border Background="#252525"/>
 
         <!-- Sidebar Navigation -->
-        <StackPanel Grid.RowSpan="2" Grid.Column="0" Margin="0" Background="#252525">
-            <TextBlock Text="BrickHub" Margin="10" Style="{StaticResource LogoStyle}"/>
+        <StackPanel Grid.RowSpan="2" Grid.Column="0" Margin="0,40,0,0" Background="#252525">
             <StackPanel>
                 <Button Content="Review" Click="DisplayReviews" Style="{StaticResource SidebarButtonStyle}"/>
                 <Button Content="Library" Click="ChangeLibraryVisibility" Style="{StaticResource SidebarButtonStyle}"/>
@@ -159,7 +158,9 @@
                 <Button x:Name="btnChange" Content="Write A Review" Width="100" Height="50" Click="SwitchReviewMode" Background="#FF333333" Foreground="White" Margin="0,0,20,0"/>
             </StackPanel>
 
-            <ListBox Grid.Row="1" Grid.ColumnSpan="3" Grid.RowSpan="4" x:Name="lbxReviews" ItemsSource="{Binding Reviews}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" Background="#FF252525" Foreground="White" Margin="20" ScrollViewer.CanContentScroll="False" AlternationCount="2">
+            <ListBox Grid.Row="1" Grid.ColumnSpan="3" Grid.RowSpan="4" x:Name="lbxReviews" ItemsSource="{Binding Reviews}"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" 
+                     Background="#FF252525" Foreground="White" Margin="20" ScrollViewer.CanContentScroll="False" AlternationCount="2">
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem">
                         <Setter Property="IsHitTestVisible" Value="False"/>
