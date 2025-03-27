@@ -360,6 +360,8 @@ namespace GameLauncher
         }
         #endregion
 
+
+
         #region EXE Handling
         private List<Game> LoadGameExecutables()
         {
