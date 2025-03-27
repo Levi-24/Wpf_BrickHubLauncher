@@ -5,6 +5,7 @@ using System.IO;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using Sodium;
+using System.Reflection.PortableExecutable;
 
 namespace GameLauncher
 {
@@ -49,26 +50,23 @@ namespace GameLauncher
             {
                 try
                 {
-                    var temp = File.ReadAllText(RememberMeTokenFile).Split('@');
-                    currentId = int.Parse(temp[0]);
-                    string token = temp[1];
+                    string token = File.ReadAllText(RememberMeTokenFile);
                     bool isExpired;
-                    bool isDevice;
 
                     using MySqlConnection conn = new(DBConnectionString);
                     conn.Open();
 
-                    string query = "SELECT device, token, expiry_date FROM tokens WHERE user_id = @user_id";
+                    string query = "SELECT user_id, device, token, expiry_date FROM tokens WHERE token = @token AND device = 1";
                     using MySqlCommand cmd = new(query, conn);
-                    cmd.Parameters.AddWithValue("@user_id", currentId);
+                    cmd.Parameters.AddWithValue("@token", token);
                     using MySqlDataReader reader = cmd.ExecuteReader();
 
                     if (reader.Read())
                     {
+                        currentId = (int)reader["user_id"];
                         isExpired = DateTime.TryParse(reader["expiry_date"].ToString(), out DateTime expiryDate) && expiryDate < DateTime.Now;
-                        isDevice = bool.TryParse(reader["device"].ToString(), out bool device);
 
-                        if (isDevice && !isExpired && reader["token"].ToString() == token )
+                        if (!isExpired && reader["token"].ToString() == token )
                         {
                             MainWindow mainWindow = new(currentId);
                             mainWindow.Show();
@@ -247,7 +245,12 @@ namespace GameLauncher
             using MySqlConnection conn = new(DBConnectionString);
             conn.Open();
 
-            string query = "INSERT INTO tokens (device, user_id, token, expiry_date) VALUES (@device, @user_id, @token, @expiry_date)";
+            string query = "DELETE FROM tokens WHERE user_id = @user_id AND device = 1 AND expiry_date < NOW();";
+            using MySqlCommand deleteCmd = new(query, conn);
+            deleteCmd.Parameters.AddWithValue("@user_id", currentId);
+            deleteCmd.ExecuteNonQuery();
+
+            query = "INSERT INTO tokens (device, user_id, token, expiry_date) VALUES (@device, @user_id, @token, @expiry_date)";
             using MySqlCommand cmd = new(query, conn);
             cmd.Parameters.AddWithValue("@device", 1);
             cmd.Parameters.AddWithValue("@user_id", currentId);
@@ -256,7 +259,7 @@ namespace GameLauncher
 
             cmd.ExecuteNonQuery();
 
-            File.WriteAllText(RememberMeTokenFile, currentId + "@" + token);
+            File.WriteAllText(RememberMeTokenFile, token);
         }
         #endregion
 

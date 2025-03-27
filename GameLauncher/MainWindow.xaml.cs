@@ -55,7 +55,6 @@ namespace GameLauncher
         #region Start
         private async Task InitializeAsync()
         {
-            //await DownloadImageAsync("https://i.postimg.cc/L6pL1Zkr/NoImage.png");
             await LoadGamesAsync();
             GamesList.ItemsSource = Games.OrderBy(x => x.Name);
             await LoadingScreenAsync();
@@ -411,8 +410,7 @@ namespace GameLauncher
             {
                 if (File.Exists(RememberMeTokenFile))
                 {
-                    var pieces = File.ReadAllText(RememberMeTokenFile).Split('@');
-                    string token = pieces[1];
+                    string token = File.ReadAllText(RememberMeTokenFile);
 
                     using MySqlConnection conn = new(DBConnectionString);
                     conn.Open();
