@@ -29,7 +29,7 @@ namespace GameLauncher
         private readonly int currentId;
         private DateTime gameStartTime;
         private Button _selectedButton;
-        private bool isMaximized;
+        private bool isMaximized = true;
         private Game _selectedGame;
         private Game SelectedGame
         {
@@ -360,8 +360,6 @@ namespace GameLauncher
         }
         #endregion
 
-
-
         #region EXE Handling
         private List<Game> LoadGameExecutables()
         {
@@ -687,7 +685,6 @@ namespace GameLauncher
                 {
                     LibraryGrid.Visibility = Visibility.Visible;
                 }
-                //Disable download button if there is no download link
                 if (SelectedGame.IsDownloadLinkValid)
                 {
                     DownloadButton.IsEnabled = true;
@@ -702,7 +699,6 @@ namespace GameLauncher
                     DownloadButton.IsEnabled = false;
                     DownloadButton.Content = "Download Link Not Valid";
                 }
-                //Disable download button if the game is already installed
                 if (Executables.Where(x => x.Id == SelectedGame.Id).Any())
                 {
                     DownloadButton.IsEnabled = false;
@@ -710,7 +706,7 @@ namespace GameLauncher
                     LaunchButton.IsEnabled = true;
                     DownloadButton.Content = "Installed";
                 }
-                //Set selectedGame value for UI elements
+
                 lblGameName.Text = SelectedGame.Name + " reviews:";
                 tbReleaseDate.Text = SelectedGame.ReleaseDate.ToString("yyyy. MMMM. dd.");
                 tbGameName.Text = SelectedGame.Name;
@@ -720,7 +716,7 @@ namespace GameLauncher
                 tbRating.Text = $"{SelectedGame.Rating}/10";
                 tbPlaytime.Text = $"{SelectedGame.PlayTime} minutes";
                 GameImage.Source = new BitmapImage(new Uri(SelectedGame.LocalImagePath));
-                //Load reviews
+
                 Reviews = LoadReviews(SelectedGame.Id);
                 lbxReviews.ItemsSource = Reviews;
             }
@@ -824,19 +820,17 @@ namespace GameLauncher
         {
             if (isMaximized)
             {
-                DraggableBorder.IsHitTestVisible = true;
-                WindowState = WindowState.Normal;
-                Width = 1000;
-                Height = 630;
-            }
-            else
-            {
                 DraggableBorder.IsHitTestVisible = false;
-                WindowState = WindowState.Normal;
                 Left = SystemParameters.WorkArea.Left;
                 Top = SystemParameters.WorkArea.Top;
                 Width = SystemParameters.WorkArea.Width;
                 Height = SystemParameters.WorkArea.Height;
+            }
+            else
+            {
+                DraggableBorder.IsHitTestVisible = true;
+                Width = 1000;
+                Height = 630;
             }
 
             isMaximized = !isMaximized;
