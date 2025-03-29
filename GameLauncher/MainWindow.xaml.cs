@@ -81,9 +81,7 @@ namespace GameLauncher
                 {
                     if (reader is MySqlDataReader mySqlReader)
                     {
-                        int playTime = LoadPlaytime(mySqlReader.GetInt32("id"));
-                        double rating = LoadAverageRating(mySqlReader.GetInt32("id"));
-                        var game = await ParseGameAsync(mySqlReader, playTime, rating);
+                        var game = await ParseGameAsync(mySqlReader);
                         Games.Add(game);
                     }
                 }
@@ -138,7 +136,7 @@ namespace GameLauncher
             }
         }
 
-        private async Task<Game> ParseGameAsync(MySqlDataReader reader, int playTime, double rating)
+        private async Task<Game> ParseGameAsync(MySqlDataReader reader)
         {
             int id = reader.GetInt32("id");
             string name = reader.GetString("name");
@@ -150,6 +148,8 @@ namespace GameLauncher
             DateTime releaseDate = reader.GetDateTime("release_date");
             string developerName = reader.GetString("developer_name");
             string publisherName = reader.GetString("publisher_name");
+            int playTime = LoadPlaytime(reader.GetInt32("id"));
+            double rating = LoadAverageRating(reader.GetInt32("id"));
 
             return new Game(id, name, exeName, description, imageUrl, downloadLink, localImagePath, releaseDate, developerName, publisherName, playTime, rating);
         }
