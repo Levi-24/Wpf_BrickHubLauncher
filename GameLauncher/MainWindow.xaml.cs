@@ -264,7 +264,7 @@ namespace GameLauncher
 
             if (folderDialog.ShowDialog() == true)
             {
-                return Path.Combine(folderDialog.FolderName, $"{selectedGame.Name}.zip");
+                return Path.Combine(folderDialog.FolderName, $"{selectedGame.ExeName[..^4]}.zip");
             }
 
             GamesList.IsHitTestVisible = true;
