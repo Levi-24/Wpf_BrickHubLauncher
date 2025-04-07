@@ -48,7 +48,7 @@
 
                 <Button x:Name="LogInButton" HorizontalAlignment="Left" Content="Login" Click="Login_Click" Padding="10" Background="#33C63A" FontWeight="Bold" Foreground="Black" Margin="0,5,0,0" Grid.Row="0" FontSize="14"/>
                 <Button x:Name="RegisterButton" HorizontalAlignment="Left" Content="Register" Click="Register_Click" Padding="10" Background="#FF3333" FontWeight="Bold" Foreground="Black" Margin="0,5,0,0" Grid.Row="0" FontSize="14" Visibility="Collapsed"/>
-                <Button x:Name="ToRegisterButton" HorizontalAlignment="Right" Content="To Register" Click="ToRegister_Click" Padding="10" Background="#3A8DFF" FontWeight="Bold" Foreground="Black" Margin="0,5,0,0" Grid.Row="0" FontSize="14"/>
+                <Button x:Name="ToRegisterButton" HorizontalAlignment="Right" Content="Go To Register" Click="ToRegister_Click" Padding="10" Background="#3A8DFF" FontWeight="Bold" Foreground="Black" Margin="0,5,0,0" Grid.Row="0" FontSize="14"/>
             </Grid>
 
             <CheckBox x:Name="RememberMeCheckbox" Content="Remember me" Foreground="White" FontSize="16" Margin="5"/>

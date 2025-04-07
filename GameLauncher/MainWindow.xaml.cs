@@ -642,6 +642,7 @@ namespace GameLauncher
                     MessageBox.Show($"Database error: {ex.Message}", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
 
+                btnSubmit.Visibility = btnSubmit.Visibility == Visibility.Visible ? Visibility.Hidden : Visibility.Visible;
                 btnChange.Content = "Add Review";
                 txbContent.Text = "Content";
                 txbTitle.Text = "Title";
@@ -713,7 +714,7 @@ namespace GameLauncher
                 tbDeveloper.Text = SelectedGame.DeveloperName;
                 tbPublisher.Text = SelectedGame.PublisherName;
                 tbGameDescription.Text = SelectedGame.Description;
-                tbRating.Text = $"{SelectedGame.Rating}/10";
+                tbRating.Text = $"{Math.Round(SelectedGame.Rating, 2)}/10";
                 tbPlaytime.Text = $"{SelectedGame.PlayTime} minutes";
                 GameImage.Source = new BitmapImage(new Uri(SelectedGame.LocalImagePath));
 

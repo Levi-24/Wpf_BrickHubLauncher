@@ -92,7 +92,7 @@ namespace GameLauncher
             if (RegisterButton.IsVisible)
             {
                 Header.Text = "Register";
-                ToRegisterButton.Content = "To Log In";
+                ToRegisterButton.Content = "Back To Log In";
                 txtPasswordAgain.Visibility = Visibility.Visible;
                 lblPasswordAgain.Visibility = Visibility.Visible;
                 RememberMeCheckbox.Visibility = Visibility.Hidden;
@@ -102,7 +102,7 @@ namespace GameLauncher
             else
             {
                 Header.Text = "Log In";
-                ToRegisterButton.Content = "To Register";
+                ToRegisterButton.Content = "Go To Register";
                 txtPasswordAgain.Visibility = Visibility.Hidden;
                 lblPasswordAgain.Visibility = Visibility.Hidden;
                 RememberMeCheckbox.Visibility = Visibility.Visible;
