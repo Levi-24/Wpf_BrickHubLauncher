@@ -145,7 +145,7 @@
             <!-- Review Title -->
             <TextBox x:Name="txbTitle" Grid.ColumnSpan="3" Grid.Row="2" Text="Title" FontSize="20" Foreground="White" Background="#FF262525" Margin="20,0,20,20"/>
             <!-- Review Content -->
-            <TextBox x:Name="txbContent" Grid.ColumnSpan="3" Grid.Row="4" Text="Content" FontSize="20" Foreground="White" Background="#FF252525" Margin="20,20,20,20"/>
+            <TextBox x:Name="txbContent" Grid.ColumnSpan="3" Grid.Row="4" Text="Content" FontSize="20" Foreground="White" TextWrapping="Wrap" Background="#FF252525" Margin="20,20,20,20"/>
             <!-- Review Slider -->
             <StackPanel Orientation="Horizontal" Grid.Row="3" Grid.ColumnSpan="2" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="20,0,0,0" >
                 <TextBlock x:Name="lblRatingText" Text="Rating (1-10)" Foreground="White"/>
